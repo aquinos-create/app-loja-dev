@@ -121,6 +121,34 @@
     .erro {
       color: #b91c1c !important;
     }
+    .barra-selecao {
+  position: sticky;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: #111827;
+  color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.barra-selecao[hidden] {
+  display: none;
+}
+
+.barra-selecao button {
+  padding: 10px 14px;
+  background: #ffffff;
+  color: #111827;
+}
+
+.barra-selecao button:disabled {
+  opacity: 0.45;
+}
 
     @media (max-width: 420px) {
       .linha-busca {
