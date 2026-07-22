@@ -117,7 +117,22 @@
       border: 2px solid #9ca3af;
       border-radius: 50%;
     }
+    .resultado {
+  cursor: pointer;
+}
 
+.resultado.selecionado {
+  padding-left: 10px;
+  padding-right: 10px;
+  background: #eef2f7;
+  border-radius: 8px;
+}
+
+.seletor.selecionado {
+  background: #111827;
+  border-color: #111827;
+  box-shadow: inset 0 0 0 4px #ffffff;
+}
     .erro {
       color: #b91c1c !important;
     }
@@ -233,6 +248,17 @@
     const resultadosElemento =
       document.getElementById('resultados');
 
+    const barraSelecao =
+  document.getElementById('barraSelecao');
+
+const contadorSelecionados =
+  document.getElementById('contadorSelecionados');
+
+const botaoCompartilhar =
+  document.getElementById('botaoCompartilhar');
+
+const selecionados = new Map();
+
 
     function mostrarStatus(mensagem, erro = false) {
       statusElemento.textContent = mensagem;
@@ -245,57 +271,127 @@
 
 
     function limparResultados() {
-      resultadosElemento.replaceChildren();
-    }
+  resultadosElemento.replaceChildren();
 
+  selecionados.clear();
+
+  atualizarBarraSelecao();
+}
+function atualizarBarraSelecao() {
+  const quantidade = selecionados.size;
+
+  barraSelecao.hidden = quantidade === 0;
+
+  contadorSelecionados.textContent =
+    quantidade === 1
+      ? '1 selecionado'
+      : quantidade + ' selecionados';
+
+  botaoCompartilhar.disabled =
+    quantidade === 0;
+}
+
+
+function alternarSelecao(produto, linha, seletor) {
+  const idProduto = produto.idProduto;
+
+  if (selecionados.has(idProduto)) {
+    selecionados.delete(idProduto);
+  } else {
+    selecionados.set(idProduto, produto);
+  }
+
+  const estaSelecionado =
+    selecionados.has(idProduto);
+
+  linha.classList.toggle(
+    'selecionado',
+    estaSelecionado
+  );
+
+  seletor.classList.toggle(
+    'selecionado',
+    estaSelecionado
+  );
+
+  atualizarBarraSelecao();
+}
 
     function exibirResultados(dados) {
-      limparResultados();
+  limparResultados();
 
-      const modelos = dados.modelos || [];
+  const modelos = dados.modelos || [];
 
-      if (modelos.length === 0) {
-        mostrarStatus('Nenhum disponível.');
-        return;
-      }
+  if (modelos.length === 0) {
+    mostrarStatus('Nenhum disponível.');
+    return;
+  }
 
-      mostrarStatus(
-        modelos.length +
-        ' modelo(s) encontrado(s).'
+  mostrarStatus(
+    modelos.length +
+    ' modelo(s) encontrado(s).'
+  );
+
+  modelos.forEach(produto => {
+    const linha =
+      document.createElement('div');
+
+    linha.className = 'resultado';
+    linha.tabIndex = 0;
+    linha.setAttribute('role', 'button');
+
+    const textos =
+      document.createElement('div');
+
+    const modelo =
+      document.createElement('div');
+
+    modelo.className = 'modelo';
+    modelo.textContent = produto.modelo;
+
+    const cor =
+      document.createElement('div');
+
+    cor.className = 'cor';
+    cor.textContent = produto.cor;
+
+    const seletor =
+      document.createElement('div');
+
+    seletor.className = 'seletor';
+
+    linha.addEventListener('click', () => {
+      alternarSelecao(
+        produto,
+        linha,
+        seletor
       );
+    });
 
-      modelos.forEach(produto => {
-        const linha =
-          document.createElement('div');
+    linha.addEventListener(
+      'keydown',
+      evento => {
+        if (
+          evento.key === 'Enter' ||
+          evento.key === ' '
+        ) {
+          evento.preventDefault();
 
-        linha.className = 'resultado';
+          alternarSelecao(
+            produto,
+            linha,
+            seletor
+          );
+        }
+      }
+    );
 
-        const textos =
-          document.createElement('div');
+    textos.append(modelo, cor);
+    linha.append(textos, seletor);
 
-        const modelo =
-          document.createElement('div');
-
-        modelo.className = 'modelo';
-        modelo.textContent = produto.modelo;
-
-        const cor =
-          document.createElement('div');
-
-        cor.className = 'cor';
-        cor.textContent = produto.cor;
-
-        const seletor =
-          document.createElement('div');
-
-        seletor.className = 'seletor';
-
-        textos.append(modelo, cor);
-        linha.append(textos, seletor);
-
-        resultadosElemento.appendChild(linha);
-      });
-    }
+    resultadosElemento.appendChild(linha);
+  });
+}
 
 
     function consultarEstoque(tamanho) {
