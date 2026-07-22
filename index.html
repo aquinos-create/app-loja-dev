@@ -164,7 +164,47 @@
 .barra-selecao button:disabled {
   opacity: 0.45;
 }
+dialog {
+  width: calc(100% - 32px);
+  max-width: 520px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+}
 
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal-conteudo {
+  padding: 22px;
+}
+
+.modal-conteudo h2 {
+  margin: 0 0 12px;
+}
+
+.modal-conteudo textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px;
+  font: inherit;
+  resize: vertical;
+  border: 1px solid #9ca3af;
+  border-radius: 8px;
+}
+
+.modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+#botaoVoltar {
+  background: #e5e7eb;
+  color: #111827;
+}
     @media (max-width: 420px) {
       .linha-busca {
         flex-direction: column;
@@ -230,6 +270,35 @@
   </button>
 </div>
     </section>
+    <dialog id="modalCompartilhar">
+  <div class="modal-conteudo">
+    <h2>Compartilhar modelos</h2>
+
+    <p id="resumoCompartilhar"></p>
+
+    <label for="mensagemCompartilhar">
+      Mensagem
+    </label>
+
+    <textarea id="mensagemCompartilhar">Temos esses modelos disponíveis 😊</textarea>
+
+    <div class="modal-acoes">
+      <button
+        id="botaoVoltar"
+        type="button"
+      >
+        Voltar
+      </button>
+
+      <button
+        id="botaoAbrirCompartilhamento"
+        type="button"
+      >
+        Abrir compartilhamento
+      </button>
+    </div>
+  </div>
+</dialog>
   </main>
 
   <script>
@@ -257,6 +326,20 @@ const contadorSelecionados =
 const botaoCompartilhar =
   document.getElementById('botaoCompartilhar');
 
+    const modalCompartilhar =
+  document.getElementById('modalCompartilhar');
+
+const resumoCompartilhar =
+  document.getElementById('resumoCompartilhar');
+
+const mensagemCompartilhar =
+  document.getElementById('mensagemCompartilhar');
+
+const botaoVoltar =
+  document.getElementById('botaoVoltar');
+
+const botaoAbrirCompartilhamento =
+  document.getElementById('botaoAbrirCompartilhamento');
 const selecionados = new Map();
 
 
@@ -393,7 +476,64 @@ function alternarSelecao(produto, linha, seletor) {
   });
 }
 
+    function abrirModalCompartilhar() {
+  const quantidade = selecionados.size;
 
+  resumoCompartilhar.textContent =
+    quantidade === 1
+      ? '1 modelo selecionado.'
+      : quantidade + ' modelos selecionados.';
+
+  modalCompartilhar.showModal();
+}
+
+    async function abrirCompartilhamentoNativo() {
+  const listaModelos =
+    Array.from(selecionados.values())
+      .map(
+        produto =>
+          produto.modelo + ' — ' + produto.cor
+      )
+      .join('\n');
+
+  const mensagem =
+    mensagemCompartilhar.value.trim();
+
+  const textoCompartilhamento =
+    [mensagem, '', listaModelos]
+      .filter(parte => parte !== '')
+      .join('\n');
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        text: textoCompartilhamento
+      });
+
+      modalCompartilhar.close();
+      return;
+    }
+
+    await navigator.clipboard.writeText(
+      textoCompartilhamento
+    );
+
+    modalCompartilhar.close();
+
+    mostrarStatus(
+      'Lista copiada. Abra o WhatsApp para enviar.'
+    );
+
+  } catch (erro) {
+    if (erro.name !== 'AbortError') {
+      mostrarStatus(
+        'Não foi possível abrir o compartilhamento.',
+        true
+      );
+    }
+  }
+}
+    
     function consultarEstoque(tamanho) {
       return new Promise((resolve, reject) => {
         const nomeCallback =
@@ -513,7 +653,23 @@ function alternarSelecao(produto, linha, seletor) {
       }
     }
 
+    botaoCompartilhar.addEventListener(
+  'click',
+  abrirModalCompartilhar
+);
 
+    botaoVoltar.addEventListener(
+  'click',
+  () => {
+    modalCompartilhar.close();
+  }
+);
+
+botaoAbrirCompartilhamento.addEventListener(
+  'click',
+  abrirCompartilhamentoNativo
+);
+    
     botaoBuscar.addEventListener(
       'click',
       buscar
