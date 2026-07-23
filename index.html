@@ -607,6 +607,75 @@ function alternarSelecao(produto, linha, seletor) {
       });
     }
 
+    function consultarFotoProduto(idProduto) {
+  return new Promise((resolve, reject) => {
+    const nomeCallback =
+      'appLojaFotoCallback_' + Date.now();
+
+    const script =
+      document.createElement('script');
+
+    const tempoLimite = setTimeout(() => {
+      limparConsultaFoto();
+
+      reject(
+        new Error(
+          'O backend demorou para responder.'
+        )
+      );
+    }, 15000);
+
+    function limparConsultaFoto() {
+      clearTimeout(tempoLimite);
+
+      delete window[nomeCallback];
+
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    }
+
+    window[nomeCallback] = resposta => {
+      limparConsultaFoto();
+
+      if (!resposta || resposta.sucesso !== true) {
+        reject(
+          new Error(
+            resposta && resposta.erro
+              ? resposta.erro
+              : 'Resposta inválida do backend.'
+          )
+        );
+
+        return;
+      }
+
+      resolve(resposta.dados);
+    };
+
+    const parametros =
+      new URLSearchParams({
+        acao: 'buscarFotoPorProduto',
+        idProduto: String(idProduto),
+        callback: nomeCallback
+      });
+
+    script.src =
+      API_URL + '?' + parametros.toString();
+
+    script.onerror = () => {
+      limparConsultaFoto();
+
+      reject(
+        new Error(
+          'Não foi possível acessar o backend.'
+        )
+      );
+    };
+
+    document.body.appendChild(script);
+  });
+}
 
     async function buscar() {
       const tamanho =
