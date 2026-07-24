@@ -595,10 +595,16 @@ if (navigator.share) {
         return;
       }
 
-      mostrarStatus(
-        'Não foi possível abrir o compartilhamento.',
-        true
-      );
+     const nomeErro =
+  erro && erro.name ? erro.name : 'Erro desconhecido';
+
+const mensagemErro =
+  erro && erro.message ? erro.message : 'Sem detalhes';
+
+mostrarStatus(
+  nomeErro + ': ' + mensagemErro,
+  true
+);
     }
 }
     
