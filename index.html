@@ -529,37 +529,45 @@ function alternarSelecao(produto, linha, seletor) {
           const produtosSelecionados =
         Array.from(selecionados.values());
 
-      let arquivoFoto = null;
+      const arquivosFoto = [];
 
-      if (produtosSelecionados.length === 1) {
-        const dadosFoto =
-          await consultarFotoProduto(
-            produtosSelecionados[0].idProduto
-          );
+for (const produto of produtosSelecionados) {
+  const dadosFoto =
+    await consultarFotoProduto(produto.idProduto);
 
-        arquivoFoto =
-          transformarFotoEmArquivo(dadosFoto);
-      }
-          if (navigator.share) {
-        const dadosCompartilhamento = {
-          text: textoCompartilhamento
-        };
+  const arquivoFoto =
+    transformarFotoEmArquivo(dadosFoto);
 
-        if (
-          arquivoFoto &&
-          navigator.canShare &&
-          navigator.canShare({
-            files: [arquivoFoto]
-          })
-        ) {
-          dadosCompartilhamento.files = [arquivoFoto];
-        }
+  arquivosFoto.push(arquivoFoto);
+}
 
-        await navigator.share(dadosCompartilhamento);
+if (navigator.share) {
+  const dadosCompartilhamento = {
+    text: textoCompartilhamento
+  };
 
-        modalCompartilhar.close();
-        return;
-      }
+  if (
+    arquivosFoto.length > 0 &&
+    navigator.canShare &&
+    navigator.canShare({
+      files: arquivosFoto
+    })
+  ) {
+    dadosCompartilhamento.files = arquivosFoto;
+  } else {
+    mostrarStatus(
+      'Não foi possível preparar todas as fotos para compartilhamento.',
+      true
+    );
+
+    return;
+  }
+
+  await navigator.share(dadosCompartilhamento);
+
+  modalCompartilhar.close();
+  return;
+}
 
     await navigator.clipboard.writeText(
       textoCompartilhamento
