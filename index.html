@@ -478,6 +478,8 @@ function alternarSelecao(produto, linha, seletor) {
 }
 
   async function abrirModalCompartilhar() {
+    mostrarStatus('');
+    
   const produtosSelecionados =
     Array.from(selecionados.values());
 
