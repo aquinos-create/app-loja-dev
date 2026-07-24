@@ -505,14 +505,40 @@ function alternarSelecao(produto, linha, seletor) {
       .join('\n');
 
   try {
-    if (navigator.share) {
-      await navigator.share({
-        text: textoCompartilhamento
-      });
+          const produtosSelecionados =
+        Array.from(selecionados.values());
 
-      modalCompartilhar.close();
-      return;
-    }
+      let arquivoFoto = null;
+
+      if (produtosSelecionados.length === 1) {
+        const dadosFoto =
+          await consultarFotoProduto(
+            produtosSelecionados[0].idProduto
+          );
+
+        arquivoFoto =
+          transformarFotoEmArquivo(dadosFoto);
+      }
+          if (navigator.share) {
+        const dadosCompartilhamento = {
+          text: textoCompartilhamento
+        };
+
+        if (
+          arquivoFoto &&
+          navigator.canShare &&
+          navigator.canShare({
+            files: [arquivoFoto]
+          })
+        ) {
+          dadosCompartilhamento.files = [arquivoFoto];
+        }
+
+        await navigator.share(dadosCompartilhamento);
+
+        modalCompartilhar.close();
+        return;
+      }
 
     await navigator.clipboard.writeText(
       textoCompartilhamento
@@ -677,6 +703,23 @@ function alternarSelecao(produto, linha, seletor) {
   });
 }
 
+    function transformarFotoEmArquivo(dadosFoto) {
+  const binario = atob(dadosFoto.base64);
+  const bytes = new Uint8Array(binario.length);
+
+  for (let indice = 0; indice < binario.length; indice++) {
+    bytes[indice] = binario.charCodeAt(indice);
+  }
+
+  return new File(
+    [bytes],
+    dadosFoto.nomeArquivo || 'produto.jpg',
+    {
+      type: dadosFoto.tipo || 'image/jpeg'
+    }
+  );
+}
+    
     async function buscar() {
       const tamanho =
         Number(campoTamanho.value);
