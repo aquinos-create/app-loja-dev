@@ -477,7 +477,7 @@ function alternarSelecao(produto, linha, seletor) {
   });
 }
 
-    function abrirModalCompartilhar() {
+  async function abrirModalCompartilhar() {
   const produtosSelecionados =
     Array.from(selecionados.values());
 
@@ -493,6 +493,29 @@ function alternarSelecao(produto, linha, seletor) {
         ' — ' +
         produtoSemFoto.cor +
         ' ainda não possui foto cadastrada.',
+      true
+    );
+
+    return;
+  }
+
+  arquivosFotoPreparados = [];
+
+  try {
+    for (const produto of produtosSelecionados) {
+      const dadosFoto =
+        await consultarFotoProduto(produto.idProduto);
+
+      const arquivoFoto =
+        transformarFotoEmArquivo(dadosFoto);
+
+      arquivosFotoPreparados.push(arquivoFoto);
+    }
+  } catch (erro) {
+    arquivosFotoPreparados = [];
+
+    mostrarStatus(
+      'Não foi possível preparar todas as fotos.',
       true
     );
 
