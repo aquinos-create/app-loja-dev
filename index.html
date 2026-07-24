@@ -477,6 +477,27 @@ function alternarSelecao(produto, linha, seletor) {
 }
 
     function abrirModalCompartilhar() {
+  const produtosSelecionados =
+    Array.from(selecionados.values());
+
+  const produtoSemFoto =
+    produtosSelecionados.find(
+      produto =>
+        !String(produto.fotoId || '').trim()
+    );
+
+  if (produtoSemFoto) {
+    mostrarStatus(
+      produtoSemFoto.modelo +
+        ' — ' +
+        produtoSemFoto.cor +
+        ' ainda não possui foto cadastrada.',
+      true
+    );
+
+    return;
+  }
+
   const quantidade = selecionados.size;
 
   resumoCompartilhar.textContent =
