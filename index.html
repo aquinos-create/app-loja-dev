@@ -533,8 +533,11 @@ function alternarSelecao(produto, linha, seletor) {
 }
 
     async function abrirCompartilhamentoNativo() {
+  const produtosSelecionados =
+    Array.from(selecionados.values());
+
   const listaModelos =
-    Array.from(selecionados.values())
+    produtosSelecionados
       .map(
         produto =>
           produto.modelo + ' — ' + produto.cor
@@ -550,46 +553,44 @@ function alternarSelecao(produto, linha, seletor) {
       .join('\n');
 
   try {
-          const produtosSelecionados =
-        Array.from(selecionados.values());
+    if (navigator.share) {
+      if (
+        arquivosFotoPreparados.length === 0 ||
+        arquivosFotoPreparados.length !==
+          produtosSelecionados.length
+      ) {
+        mostrarStatus(
+          'As fotos ainda não estão prontas para compartilhamento.',
+          true
+        );
 
-      const arquivosFoto = [];
+        return;
+      }
 
-for (const produto of produtosSelecionados) {
-  const dadosFoto =
-    await consultarFotoProduto(produto.idProduto);
+      if (
+        !navigator.canShare ||
+        !navigator.canShare({
+          files: arquivosFotoPreparados
+        })
+      ) {
+        mostrarStatus(
+          'Este dispositivo não permite compartilhar estas fotos juntas.',
+          true
+        );
 
-  const arquivoFoto =
-    transformarFotoEmArquivo(dadosFoto);
+        return;
+      }
 
-  arquivosFoto.push(arquivoFoto);
-}
+      const dadosCompartilhamento = {
+        text: textoCompartilhamento,
+        files: arquivosFotoPreparados
+      };
 
-if (navigator.share) {
-  const dadosCompartilhamento = {};
+      await navigator.share(dadosCompartilhamento);
 
-  if (
-    arquivosFoto.length > 0 &&
-    navigator.canShare &&
-    navigator.canShare({
-      files: arquivosFoto
-    })
-  ) {
-    dadosCompartilhamento.files = arquivosFoto;
-  } else {
-    mostrarStatus(
-      'Não foi possível preparar todas as fotos para compartilhamento.',
-      true
-    );
-
-    return;
-  }
-
-  await navigator.share(dadosCompartilhamento);
-
-  modalCompartilhar.close();
-  return;
-}
+      modalCompartilhar.close();
+      return;
+    }
 
     await navigator.clipboard.writeText(
       textoCompartilhamento
@@ -600,36 +601,26 @@ if (navigator.share) {
     mostrarStatus(
       'Lista copiada. Abra o WhatsApp para enviar.'
     );
-
-      } catch (erro) {
-      if (erro && erro.name === 'AbortError') {
-        return;
-      }
-
-      if (
-        erro &&
-        erro.message ===
-          'O produto não possui foto vinculada.'
-      ) {
-        mostrarStatus(
-          'Este produto ainda não possui foto cadastrada.',
-          true
-        );
-
-        return;
-      }
-
-     const nomeErro =
-  erro && erro.name ? erro.name : 'Erro desconhecido';
-
-const mensagemErro =
-  erro && erro.message ? erro.message : 'Sem detalhes';
-
-mostrarStatus(
-  nomeErro + ': ' + mensagemErro,
-  true
-);
+  } catch (erro) {
+    if (erro && erro.name === 'AbortError') {
+      return;
     }
+
+    const nomeErro =
+      erro && erro.name
+        ? erro.name
+        : 'Erro desconhecido';
+
+    const mensagemErro =
+      erro && erro.message
+        ? erro.message
+        : 'Sem detalhes';
+
+    mostrarStatus(
+      nomeErro + ': ' + mensagemErro,
+      true
+    );
+  }
 }
     
     function consultarEstoque(tamanho) {
