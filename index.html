@@ -550,14 +550,29 @@ function alternarSelecao(produto, linha, seletor) {
       'Lista copiada. Abra o WhatsApp para enviar.'
     );
 
-  } catch (erro) {
-    if (erro.name !== 'AbortError') {
+      } catch (erro) {
+      if (erro && erro.name === 'AbortError') {
+        return;
+      }
+
+      if (
+        erro &&
+        erro.message ===
+          'O produto não possui foto vinculada.'
+      ) {
+        mostrarStatus(
+          'Este produto ainda não possui foto cadastrada.',
+          true
+        );
+
+        return;
+      }
+
       mostrarStatus(
         'Não foi possível abrir o compartilhamento.',
         true
       );
     }
-  }
 }
     
     function consultarEstoque(tamanho) {
