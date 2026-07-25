@@ -93,9 +93,22 @@
       display: flex;
       justify-content: space-between;
       gap: 12px;
-      padding: 14px 0;
+      padding: 14px 0 14px 56px;
+      position: relative;
       border-bottom: 1px solid #e5e7eb;
     }
+
+    .miniatura-foto {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translateY(-50%);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
 
     .resultado:last-child {
       border-bottom: 0;
@@ -424,6 +437,12 @@ function alternarSelecao(produto, linha, seletor) {
     linha.tabIndex = 0;
     linha.setAttribute('role', 'button');
 
+    const miniatura =
+  document.createElement('div');
+
+miniatura.className = 'miniatura-foto';
+miniatura.setAttribute('aria-hidden', 'true');
+
     const textos =
       document.createElement('div');
 
@@ -471,7 +490,7 @@ function alternarSelecao(produto, linha, seletor) {
     );
 
     textos.append(modelo, cor);
-    linha.append(textos, seletor);
+    linha.append(miniatura, textos, seletor);
 
     resultadosElemento.appendChild(linha);
   });
