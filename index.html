@@ -108,7 +108,14 @@
   border-radius: 8px;
   overflow: hidden;
   background: #f3f4f6;
-}
+    }
+
+ .miniatura-foto img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+    }
 
     .resultado:last-child {
       border-bottom: 0;
@@ -493,7 +500,34 @@ miniatura.setAttribute('aria-hidden', 'true');
     linha.append(miniatura, textos, seletor);
 
     resultadosElemento.appendChild(linha);
+    
+    enfileirarMiniaturaProduto(produto, miniatura);
   });
+}
+
+   async function carregarMiniaturaProduto(produto, miniatura) {
+  try {
+    const dadosFoto =
+      await consultarFotoProduto(produto.idProduto);
+
+    const imagem =
+      document.createElement('img');
+
+    imagem.alt = '';
+    imagem.src =
+      `data:${dadosFoto.tipo || 'image/jpeg'};base64,${dadosFoto.base64}`;
+
+    miniatura.replaceChildren(imagem);
+  } catch (erro) {
+    miniatura.replaceChildren();
+  }
+}
+let filaMiniaturas = Promise.resolve();
+
+function enfileirarMiniaturaProduto(produto, miniatura) {
+  filaMiniaturas = filaMiniaturas.then(() =>
+    carregarMiniaturaProduto(produto, miniatura)
+  );
 }
 
   async function abrirModalCompartilhar() {
