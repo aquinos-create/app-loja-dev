@@ -47,6 +47,73 @@
       border-radius: 12px;
     }
 
+    .grupo-filtro {
+  margin-bottom: 20px;
+}
+
+.grupo-filtro:last-of-type {
+  margin-bottom: 18px;
+}
+
+.cabecalho-filtro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.titulo-filtro {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.cabecalho-filtro .titulo-filtro {
+  margin-bottom: 0;
+}
+
+.chips-filtro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-filtro {
+  width: auto;
+  padding: 9px 13px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #9ca3af;
+  border-radius: 999px;
+}
+
+.chip-filtro[aria-pressed="true"] {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+.botao-limpar-filtros {
+  width: auto;
+  padding: 2px 0;
+  font-size: 13px;
+  font-weight: 400;
+  background: transparent;
+  color: #4b5563;
+  border-radius: 0;
+}
+
+.botao-limpar-filtros:hover {
+  text-decoration: underline;
+}
+
+.botao-consultar {
+  width: 100%;
+}
+
     label {
       display: block;
       margin-bottom: 8px;
@@ -226,30 +293,125 @@ dialog::backdrop {
     </p>
 
     <section class="painel">
-      <label for="tamanho">
-        Numeração
-      </label>
+      <div class="grupo-filtro">
+  <label for="tamanho">
+    Tamanho
+  </label>
 
-      <div class="linha-busca">
-        <input
-          id="tamanho"
-          type="number"
-          min="18"
-          max="48"
-          step="1"
-          inputmode="numeric"
-          placeholder="Ex.: 37"
-        >
+  <input
+    id="tamanho"
+    type="number"
+    min="18"
+    max="48"
+    step="1"
+    inputmode="numeric"
+    placeholder="Ex.: 37"
+  >
+</div>
 
-        <button
-          id="botaoBuscar"
-          type="button"
-        >
-          Buscar modelos
-        </button>
-      </div>
+<div class="grupo-filtro">
+  <div class="cabecalho-filtro">
+    <span class="titulo-filtro">
+      Público
+    </span>
 
-      <p id="status"></p>
+    <button
+      id="botaoLimparFiltros"
+      class="botao-limpar-filtros"
+      type="button"
+      hidden
+    >
+      Limpar filtros
+    </button>
+  </div>
+
+  <div
+    id="filtrosPublico"
+    class="chips-filtro"
+  >
+    <button
+      class="chip-filtro"
+      type="button"
+      data-publico="Feminino"
+      aria-pressed="false"
+    >
+      Feminino
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-publico="Masculino"
+      aria-pressed="false"
+    >
+      Masculino
+    </button>
+  </div>
+</div>
+
+<div class="grupo-filtro">
+  <span class="titulo-filtro">
+    Uso
+  </span>
+
+  <div
+    id="filtrosUso"
+    class="chips-filtro"
+  >
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Esportivo"
+      aria-pressed="false"
+    >
+      Esportivo
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Sair"
+      aria-pressed="false"
+    >
+      Sair
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Trabalho"
+      aria-pressed="false"
+    >
+      Trabalho
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Dia a dia"
+      aria-pressed="false"
+    >
+      Dia a dia
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Casual"
+      aria-pressed="false"
+    >
+      Casual
+    </button>
+  </div>
+</div>
+
+<button
+  id="botaoBuscar"
+  class="botao-consultar"
+  type="button"
+>
+  Consultar
+</button>
 
       <div id="resultados"></div>
       <div
@@ -311,6 +473,15 @@ dialog::backdrop {
     const botaoBuscar =
       document.getElementById('botaoBuscar');
 
+    const filtrosPublico =
+  document.getElementById('filtrosPublico');
+
+const filtrosUso =
+  document.getElementById('filtrosUso');
+
+const botaoLimparFiltros =
+  document.getElementById('botaoLimparFiltros');
+
     const statusElemento =
       document.getElementById('status');
 
@@ -342,6 +513,44 @@ const botaoAbrirCompartilhamento =
   document.getElementById('botaoAbrirCompartilhamento');
 const selecionados = new Map();
     let arquivosFotoPreparados = [];
+
+    let publicoSelecionado = '';
+
+const usosSelecionados =
+  new Set();
+
+    function atualizarFiltrosVisuais() {
+  filtrosPublico
+    .querySelectorAll('[data-publico]')
+    .forEach(chip => {
+      const ativo =
+        chip.dataset.publico ===
+        publicoSelecionado;
+
+      chip.setAttribute(
+        'aria-pressed',
+        String(ativo)
+      );
+    });
+
+  filtrosUso
+    .querySelectorAll('[data-uso]')
+    .forEach(chip => {
+      const ativo =
+        usosSelecionados.has(
+          chip.dataset.uso
+        );
+
+      chip.setAttribute(
+        'aria-pressed',
+        String(ativo)
+      );
+    });
+
+  botaoLimparFiltros.hidden =
+    !publicoSelecionado &&
+    usosSelecionados.size === 0;
+}
 
 
     function mostrarStatus(mensagem, erro = false) {
@@ -832,6 +1041,61 @@ function alternarSelecao(produto, linha, seletor) {
         botaoBuscar.disabled = false;
       }
     }
+
+    filtrosPublico.addEventListener(
+  'click',
+  evento => {
+    const chip =
+      evento.target.closest('[data-publico]');
+
+    if (!chip) {
+      return;
+    }
+
+    const publico =
+      chip.dataset.publico;
+
+    publicoSelecionado =
+      publicoSelecionado === publico
+        ? ''
+        : publico;
+
+    atualizarFiltrosVisuais();
+  }
+);
+
+filtrosUso.addEventListener(
+  'click',
+  evento => {
+    const chip =
+      evento.target.closest('[data-uso]');
+
+    if (!chip) {
+      return;
+    }
+
+    const uso =
+      chip.dataset.uso;
+
+    if (usosSelecionados.has(uso)) {
+      usosSelecionados.delete(uso);
+    } else {
+      usosSelecionados.add(uso);
+    }
+
+    atualizarFiltrosVisuais();
+  }
+);
+
+botaoLimparFiltros.addEventListener(
+  'click',
+  () => {
+    publicoSelecionado = '';
+    usosSelecionados.clear();
+
+    atualizarFiltrosVisuais();
+  }
+);
 
     botaoCompartilhar.addEventListener(
   'click',
