@@ -78,6 +78,31 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+    .grupo-filtro-centralizado > .titulo-filtro {
+  text-align: center;
+}
+
+.grupo-filtro-centralizado .chips-filtro {
+  justify-content: center;
+}
+
+.grupo-filtro-centralizado .cabecalho-filtro {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.grupo-filtro-centralizado
+  .cabecalho-filtro
+  .titulo-filtro {
+  grid-column: 2;
+  text-align: center;
+}
+
+.grupo-filtro-centralizado
+  .botao-limpar-filtros {
+  grid-column: 3;
+  justify-self: end;
+}
 
 .chip-filtro {
   width: auto;
@@ -309,7 +334,7 @@ dialog::backdrop {
   >
 </div>
 
-<div class="grupo-filtro">
+<div class="grupo-filtro grupo-filtro-centralizado">
   <div class="cabecalho-filtro">
     <span class="titulo-filtro">
       Público
@@ -349,7 +374,7 @@ dialog::backdrop {
   </div>
 </div>
 
-<div class="grupo-filtro">
+<div class="grupo-filtro grupo-filtro-centralizado">
   <span class="titulo-filtro">
     Uso
   </span>
