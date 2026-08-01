@@ -1034,6 +1034,30 @@
       );
     }
 
+    function obterNomeBaseGrade(nomePadrao) {
+      const nomeCompleto =
+        String(nomePadrao || '').trim();
+
+      const nomeBase =
+        nomeCompleto
+          .split(/\s*—\s*/)[0]
+          .replace(
+            /\s+\d+\s*pares?$/i,
+            ''
+          )
+          .trim();
+
+      return nomeBase || nomeCompleto;
+    }
+
+    function formatarParesGrade(quantidade) {
+      const numeroPares = Number(quantidade);
+
+      return numeroPares === 1
+        ? '1 par'
+        : `${numeroPares} pares`;
+    }
+
     function criarGrade(grade) {
       const elemento =
         document.createElement('article');
@@ -1045,7 +1069,8 @@
 
       nome.className = 'nome-grade';
       nome.textContent =
-        `${grade.nomePadrao} — ${grade.paresPorGrade} pares`;
+        `${obterNomeBaseGrade(grade.nomePadrao)} — ` +
+        formatarParesGrade(grade.paresPorGrade);
 
       const meta =
         document.createElement('p');
