@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
@@ -30,6 +29,10 @@
       font: inherit;
     }
 
+    button {
+      color: inherit;
+    }
+
     .container {
       width: 100%;
       max-width: 560px;
@@ -49,12 +52,67 @@
       font-size: 26px;
     }
 
+    h2,
+    h3 {
+      margin-top: 0;
+    }
+
     .subtitulo {
       margin: 0;
       color: #6b7280;
     }
 
-    .link-voltar {
+    .responsavel-compacto {
+      position: relative;
+      display: inline-block;
+      margin-top: 12px;
+    }
+
+    .responsavel-compacto::before {
+      content: '👤';
+      position: absolute;
+      z-index: 1;
+      top: 50%;
+      left: 10px;
+      font-size: 14px;
+      line-height: 1;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+
+    .responsavel-compacto select {
+      width: auto;
+      max-width: 190px;
+      min-height: 38px;
+      padding: 8px 32px 8px 32px;
+      font-size: 14px;
+      font-weight: 700;
+      background: #e5e7eb;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .responsavel-compacto select:disabled {
+      background: #e5e7eb;
+      color: #6b7280;
+      cursor: wait;
+    }
+
+    .rotulo-oculto {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .link-consulta,
+    .botao-voltar {
       flex: 0 0 auto;
       padding: 9px 12px;
       font-size: 14px;
@@ -62,7 +120,9 @@
       text-decoration: none;
       background: #e5e7eb;
       color: #111827;
+      border: 0;
       border-radius: 8px;
+      cursor: pointer;
     }
 
     .painel {
@@ -101,7 +161,7 @@
       cursor: wait;
     }
 
-    #status {
+    .status {
       min-height: 22px;
       margin: 0 0 16px;
       color: #4b5563;
@@ -111,7 +171,8 @@
       color: #b91c1c !important;
     }
 
-    .secao-lista {
+    .secao-lista,
+    .secao-detalhes {
       margin-top: 22px;
     }
 
@@ -140,15 +201,30 @@
 
     .produto {
       display: flex;
+      width: 100%;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       padding: 14px 0;
+      text-align: left;
+      background: transparent;
+      border: 0;
       border-bottom: 1px solid #e5e7eb;
+      cursor: pointer;
     }
 
     .produto:last-child {
       border-bottom: 0;
+    }
+
+    .produto:hover,
+    .produto:focus-visible {
+      background: #f9fafb;
+      outline: none;
+    }
+
+    .produto-textos {
+      min-width: 0;
     }
 
     .modelo {
@@ -160,14 +236,179 @@
       color: #6b7280;
     }
 
-    .tipo-entrada {
+    .produto-final {
+      display: flex;
       flex: 0 0 auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tipo-entrada {
       padding: 5px 8px;
       font-size: 12px;
       font-weight: 700;
       background: #eef2f7;
       color: #374151;
       border-radius: 999px;
+    }
+
+    .seta {
+      font-size: 24px;
+      line-height: 1;
+      color: #6b7280;
+    }
+
+    .cabecalho-detalhes {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .cabecalho-detalhes h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .identificacao-produto {
+      padding-bottom: 18px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .identificacao-produto h3 {
+      margin: 0 0 6px;
+      font-size: 23px;
+    }
+
+    .cor-detalhes {
+      margin: 0 0 12px;
+      color: #6b7280;
+    }
+
+    .mensagem-variados {
+      margin: 14px 0 0;
+      padding: 12px;
+      background: #f3f4f6;
+      color: #374151;
+      border-radius: 8px;
+    }
+
+    .grades-recolhiveis {
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+
+    .grades-recolhiveis summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      font-weight: 700;
+      background: #f9fafb;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .grades-recolhiveis summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .indicador-grades {
+      flex: 0 0 auto;
+      font-size: 20px;
+      line-height: 1;
+      color: #6b7280;
+      transition: transform 0.2s ease;
+    }
+
+    .grades-recolhiveis[open] .indicador-grades {
+      transform: rotate(180deg);
+    }
+
+    .grades-recolhiveis[open] summary {
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .conteudo-grades {
+      padding: 12px;
+    }
+
+    .grade {
+      margin-top: 12px;
+      padding: 14px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+
+    .grade:first-child {
+      margin-top: 0;
+    }
+
+    .nome-grade {
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .meta-grade {
+      margin: 5px 0 0;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .composicao-grade {
+      margin: 10px 0 0;
+      line-height: 1.55;
+      color: #374151;
+    }
+
+    .tabela-tamanhos {
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+
+    .linha-tamanho {
+      display: grid;
+      grid-template-columns: 0.85fr 1fr 1fr 1fr;
+      gap: 8px;
+      align-items: center;
+      min-height: 48px;
+      padding: 9px 10px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .linha-tamanho:last-child {
+      border-bottom: 0;
+    }
+
+    .cabecalho-tamanhos {
+      min-height: 42px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    .numero-tamanho {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .valor-estoque {
+      text-align: center;
+    }
+
+    .alerta-item {
+      margin-top: 8px;
+      padding: 11px 12px;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
     }
 
     [hidden] {
@@ -190,6 +431,17 @@
       .painel {
         padding: 16px;
       }
+
+      .linha-tamanho {
+        grid-template-columns: 0.75fr 1fr 1fr 1fr;
+        gap: 5px;
+        padding-right: 7px;
+        padding-left: 7px;
+      }
+
+      .cabecalho-tamanhos {
+        font-size: 11px;
+      }
     }
   </style>
 </head>
@@ -203,29 +455,35 @@
         <p class="subtitulo">
           Ambiente de desenvolvimento
         </p>
+
+        <div class="responsavel-compacto">
+          <label
+            class="rotulo-oculto"
+            for="responsavel"
+          >
+            Responsável
+          </label>
+
+          <select id="responsavel" disabled>
+            <option value="">
+              Carregando...
+            </option>
+          </select>
+        </div>
       </div>
 
       <a
-        class="link-voltar"
+        class="link-consulta"
         href="index.html"
       >
         Consulta
       </a>
     </header>
 
-    <section class="painel">
-      <div class="grupo-campo">
-        <label for="responsavel">
-          Responsável
-        </label>
-
-        <select id="responsavel" disabled>
-          <option value="">
-            Carregando responsáveis...
-          </option>
-        </select>
-      </div>
-
+    <section
+      id="telaLista"
+      class="painel"
+    >
       <div class="grupo-campo">
         <label for="pesquisaProduto">
           Pesquisar produto
@@ -240,7 +498,10 @@
         >
       </div>
 
-      <p id="status">
+      <p
+        id="statusLista"
+        class="status"
+      >
         Carregando produtos...
       </p>
 
@@ -296,11 +557,124 @@
         </p>
       </section>
     </section>
+
+    <section
+      id="telaDetalhes"
+      class="painel"
+      hidden
+    >
+      <div class="cabecalho-detalhes">
+        <button
+          id="botaoVoltar"
+          class="botao-voltar"
+          type="button"
+        >
+          ← Voltar
+        </button>
+
+        <h2>Detalhes do produto</h2>
+      </div>
+
+      <p
+        id="statusDetalhes"
+        class="status"
+      >
+        Carregando detalhes...
+      </p>
+
+      <div
+        id="conteudoDetalhes"
+        hidden
+      >
+        <section class="identificacao-produto">
+          <h3 id="modeloDetalhes"></h3>
+
+          <p
+            id="corDetalhes"
+            class="cor-detalhes"
+          ></p>
+
+          <span
+            id="tipoEntradaDetalhes"
+            class="tipo-entrada"
+          ></span>
+
+          <p
+            id="mensagemVariados"
+            class="mensagem-variados"
+            hidden
+          >
+            Produto Variados — sem grade fixa.
+          </p>
+        </section>
+
+        <details
+          id="secaoGrades"
+          class="secao-detalhes grades-recolhiveis"
+        >
+          <summary>
+            <span id="tituloGrades">
+              Grades aplicáveis (0)
+            </span>
+
+            <span
+              class="indicador-grades"
+              aria-hidden="true"
+            >
+              ⌄
+            </span>
+          </summary>
+
+          <div
+            id="listaGrades"
+            class="conteudo-grades"
+          ></div>
+        </details>
+
+        <section class="secao-detalhes">
+          <h3 class="titulo-secao">
+            Estoque por tamanho
+          </h3>
+
+          <div class="tabela-tamanhos">
+            <div class="linha-tamanho cabecalho-tamanhos">
+              <span>Tamanho</span>
+              <span class="valor-estoque">Disponível</span>
+              <span class="valor-estoque">Reservado</span>
+              <span class="valor-estoque">Total</span>
+            </div>
+
+            <div id="listaTamanhos"></div>
+          </div>
+        </section>
+
+        <section
+          id="secaoAlertas"
+          class="secao-detalhes"
+          hidden
+        >
+          <h3 class="titulo-secao">
+            Alertas de inconsistência
+          </h3>
+
+          <div id="listaAlertas"></div>
+        </section>
+      </div>
+    </section>
   </main>
 
   <script>
     const API_URL =
       'https://script.google.com/macros/s/AKfycbwUJJCGzZ7j63nOiajISFco-EHiFQG8T2ZDDKfvck0F9-2AN9TP-30p9embQ9vnFXpQ/exec';
+
+    const CHAVE_RESPONSAVEL =
+      'APP_LOJA_RESPONSAVEL_ATUALIZAR_ESTOQUE';
+
+    const telaLista =
+      document.getElementById('telaLista');
+
+    const telaDetalhes =
+      document.getElementById('telaDetalhes');
 
     const campoResponsavel =
       document.getElementById('responsavel');
@@ -308,8 +682,8 @@
     const campoPesquisa =
       document.getElementById('pesquisaProduto');
 
-    const statusElemento =
-      document.getElementById('status');
+    const statusLista =
+      document.getElementById('statusLista');
 
     const listaFavoritos =
       document.getElementById('listaFavoritos');
@@ -329,19 +703,57 @@
     const contadorProdutos =
       document.getElementById('contadorProdutos');
 
+    const botaoVoltar =
+      document.getElementById('botaoVoltar');
+
+    const statusDetalhes =
+      document.getElementById('statusDetalhes');
+
+    const conteudoDetalhes =
+      document.getElementById('conteudoDetalhes');
+
+    const modeloDetalhes =
+      document.getElementById('modeloDetalhes');
+
+    const corDetalhes =
+      document.getElementById('corDetalhes');
+
+    const tipoEntradaDetalhes =
+      document.getElementById('tipoEntradaDetalhes');
+
+    const mensagemVariados =
+      document.getElementById('mensagemVariados');
+
+    const secaoGrades =
+      document.getElementById('secaoGrades');
+
+    const tituloGrades =
+      document.getElementById('tituloGrades');
+
+    const listaGrades =
+      document.getElementById('listaGrades');
+
+    const listaTamanhos =
+      document.getElementById('listaTamanhos');
+
+    const secaoAlertas =
+      document.getElementById('secaoAlertas');
+
+    const listaAlertas =
+      document.getElementById('listaAlertas');
+
     let produtos = [];
     let sequenciaCallback = 0;
+    let sequenciaDetalhes = 0;
+    let posicaoLista = 0;
 
     function mostrarStatus(
+      elemento,
       mensagem,
       erro = false
     ) {
-      statusElemento.textContent = mensagem;
-
-      statusElemento.classList.toggle(
-        'erro',
-        erro
-      );
+      elemento.textContent = mensagem;
+      elemento.classList.toggle('erro', erro);
     }
 
     function normalizarBusca(valor) {
@@ -351,6 +763,28 @@
         .toLowerCase()
         .replace(/\s+/g, ' ')
         .trim();
+    }
+
+    function compararProdutos(
+      produtoA,
+      produtoB
+    ) {
+      const comparacaoModelo =
+        produtoA.modelo.localeCompare(
+          produtoB.modelo,
+          'pt-BR',
+          { sensitivity: 'base' }
+        );
+
+      if (comparacaoModelo !== 0) {
+        return comparacaoModelo;
+      }
+
+      return produtoA.cor.localeCompare(
+        produtoB.cor,
+        'pt-BR',
+        { sensitivity: 'base' }
+      );
     }
 
     function consultarApiJsonp(
@@ -434,12 +868,20 @@
 
     function criarLinhaProduto(produto) {
       const linha =
-        document.createElement('div');
+        document.createElement('button');
 
+      linha.type = 'button';
       linha.className = 'produto';
+
+      linha.setAttribute(
+        'aria-label',
+        `Abrir ${produto.modelo}, cor ${produto.cor}`
+      );
 
       const textos =
         document.createElement('div');
+
+      textos.className = 'produto-textos';
 
       const modelo =
         document.createElement('div');
@@ -453,6 +895,11 @@
       cor.className = 'cor';
       cor.textContent = produto.cor;
 
+      const final =
+        document.createElement('div');
+
+      final.className = 'produto-final';
+
       const tipoEntrada =
         document.createElement('span');
 
@@ -460,8 +907,20 @@
       tipoEntrada.textContent =
         produto.formaEntradaEstoque;
 
+      const seta =
+        document.createElement('span');
+
+      seta.className = 'seta';
+      seta.setAttribute('aria-hidden', 'true');
+      seta.textContent = '›';
+
       textos.append(modelo, cor);
-      linha.append(textos, tipoEntrada);
+      final.append(tipoEntrada, seta);
+      linha.append(textos, final);
+
+      linha.addEventListener('click', () => {
+        abrirProduto(produto.idProduto);
+      });
 
       return linha;
     }
@@ -501,13 +960,14 @@
         normalizarBusca(campoPesquisa.value);
 
       const produtosFiltrados =
-        termo
+        (termo
           ? produtos.filter(produto =>
               normalizarBusca(
                 produto.modelo + ' ' + produto.cor
               ).includes(termo)
             )
-          : produtos;
+          : [...produtos]
+        ).sort(compararProdutos);
 
       const favoritos =
         produtosFiltrados.filter(
@@ -545,10 +1005,38 @@
         produtosFiltrados.length > 0;
 
       mostrarStatus(
+        statusLista,
         termo
           ? `${produtosFiltrados.length} produto(s) encontrado(s).`
           : `${produtos.length} produto(s) carregado(s).`
       );
+    }
+
+    function obterResponsavelMemorizado() {
+      try {
+        return localStorage.getItem(
+          CHAVE_RESPONSAVEL
+        ) || '';
+      } catch (erro) {
+        return '';
+      }
+    }
+
+    function memorizarResponsavel(idUsuario) {
+      if (!idUsuario) {
+        return;
+      }
+
+      try {
+        localStorage.setItem(
+          CHAVE_RESPONSAVEL,
+          idUsuario
+        );
+      } catch (erro) {
+        console.warn(
+          'Não foi possível memorizar o responsável.'
+        );
+      }
     }
 
     function preencherUsuarios(usuarios) {
@@ -575,7 +1063,316 @@
         campoResponsavel.appendChild(opcao);
       });
 
+      const idMemorizado =
+        obterResponsavelMemorizado();
+
+      const usuarioMemorizado =
+        usuarios.find(
+          usuario =>
+            usuario.idUsuario === idMemorizado
+        );
+
+      const usuarioEdison =
+        usuarios.find(
+          usuario => usuario.nome === 'Edison'
+        );
+
+      campoResponsavel.value =
+        usuarioMemorizado
+          ? usuarioMemorizado.idUsuario
+          : usuarioEdison
+            ? usuarioEdison.idUsuario
+            : '';
+
       campoResponsavel.disabled = false;
+
+      memorizarResponsavel(
+        campoResponsavel.value
+      );
+    }
+
+    function obterNomeBaseGrade(nomePadrao) {
+      const nomeCompleto =
+        String(nomePadrao || '').trim();
+
+      const nomeBase =
+        nomeCompleto
+          .split(/\s*—\s*/)[0]
+          .replace(
+            /\s+\d+\s*pares?$/i,
+            ''
+          )
+          .trim();
+
+      return nomeBase || nomeCompleto;
+    }
+
+    function formatarParesGrade(quantidade) {
+      const numeroPares = Number(quantidade);
+
+      return numeroPares === 1
+        ? '1 par'
+        : `${numeroPares} pares`;
+    }
+
+    function criarGrade(grade) {
+      const elemento =
+        document.createElement('article');
+
+      elemento.className = 'grade';
+
+      const nome =
+        document.createElement('p');
+
+      nome.className = 'nome-grade';
+      nome.textContent =
+        `${obterNomeBaseGrade(grade.nomePadrao)} — ` +
+        formatarParesGrade(grade.paresPorGrade);
+
+      const meta =
+        document.createElement('p');
+
+      meta.className = 'meta-grade';
+
+      const dadosMeta = [grade.tipoGrade];
+
+      if (grade.nomeFornecedor) {
+        dadosMeta.push(
+          `Fornecedor: ${grade.nomeFornecedor}`
+        );
+      }
+
+      meta.textContent =
+        dadosMeta.filter(Boolean).join(' · ');
+
+      const composicao =
+        document.createElement('p');
+
+      composicao.className = 'composicao-grade';
+      composicao.textContent =
+        (Array.isArray(grade.composicao)
+          ? grade.composicao
+          : []
+        )
+          .map(item =>
+            `${item.tamanho}: ${item.quantidadePares}`
+          )
+          .join(' · ');
+
+      elemento.append(nome, meta, composicao);
+
+      return elemento;
+    }
+
+    function renderizarGrades(grades) {
+      listaGrades.replaceChildren();
+
+      tituloGrades.textContent =
+        `Grades aplicáveis (${grades.length})`;
+
+      secaoGrades.open = false;
+
+      const fragmento =
+        document.createDocumentFragment();
+
+      grades.forEach(grade => {
+        fragmento.appendChild(
+          criarGrade(grade)
+        );
+      });
+
+      listaGrades.appendChild(fragmento);
+    }
+
+    function criarLinhaTamanho(item) {
+      const linha =
+        document.createElement('div');
+
+      linha.className = 'linha-tamanho';
+
+      const tamanho =
+        document.createElement('span');
+
+      tamanho.className = 'numero-tamanho';
+      tamanho.textContent = item.tamanho;
+
+      const disponivel =
+        document.createElement('span');
+
+      disponivel.className = 'valor-estoque';
+      disponivel.textContent =
+        item.quantidadeDisponivel;
+
+      const reservado =
+        document.createElement('span');
+
+      reservado.className = 'valor-estoque';
+      reservado.textContent =
+        item.quantidadeReservada;
+
+      const total =
+        document.createElement('span');
+
+      total.className = 'valor-estoque';
+      total.textContent = item.quantidadeTotal;
+
+      linha.append(
+        tamanho,
+        disponivel,
+        reservado,
+        total
+      );
+
+      return linha;
+    }
+
+    function renderizarTamanhos(tamanhos) {
+      listaTamanhos.replaceChildren();
+
+      const fragmento =
+        document.createDocumentFragment();
+
+      tamanhos.forEach(item => {
+        fragmento.appendChild(
+          criarLinhaTamanho(item)
+        );
+      });
+
+      listaTamanhos.appendChild(fragmento);
+    }
+
+    function renderizarAlertas(alertas) {
+      listaAlertas.replaceChildren();
+
+      const possuiAlertas = alertas.length > 0;
+
+      secaoAlertas.hidden = !possuiAlertas;
+
+      if (!possuiAlertas) {
+        return;
+      }
+
+      const fragmento =
+        document.createDocumentFragment();
+
+      alertas.forEach(alerta => {
+        const item =
+          document.createElement('div');
+
+        item.className = 'alerta-item';
+        item.textContent = alerta.mensagem;
+        fragmento.appendChild(item);
+      });
+
+      listaAlertas.appendChild(fragmento);
+    }
+
+    function renderizarDetalhes(dados) {
+      const produto = dados.produto;
+      const tamanhos =
+        Array.isArray(dados.tamanhos)
+          ? dados.tamanhos
+          : [];
+
+      const grades =
+        Array.isArray(dados.grades)
+          ? dados.grades
+          : [];
+
+      const alertas =
+        Array.isArray(dados.alertas)
+          ? dados.alertas
+          : [];
+
+      modeloDetalhes.textContent = produto.modelo;
+      corDetalhes.textContent = produto.cor;
+      tipoEntradaDetalhes.textContent =
+        produto.formaEntradaEstoque;
+
+      const produtoVariados =
+        produto.formaEntradaEstoque === 'Variados';
+
+      mensagemVariados.hidden = !produtoVariados;
+      secaoGrades.hidden = produtoVariados;
+      secaoGrades.open = false;
+
+      if (produtoVariados) {
+        listaGrades.replaceChildren();
+      } else {
+        renderizarGrades(grades);
+      }
+
+      renderizarTamanhos(tamanhos);
+      renderizarAlertas(alertas);
+
+      mostrarStatus(
+        statusDetalhes,
+        ''
+      );
+
+      statusDetalhes.hidden = true;
+      conteudoDetalhes.hidden = false;
+    }
+
+    async function abrirProduto(idProduto) {
+      posicaoLista = window.scrollY;
+      sequenciaDetalhes++;
+
+      const requisicaoAtual = sequenciaDetalhes;
+
+      telaLista.hidden = true;
+      telaDetalhes.hidden = false;
+      conteudoDetalhes.hidden = true;
+      statusDetalhes.hidden = false;
+
+      mostrarStatus(
+        statusDetalhes,
+        'Carregando detalhes...'
+      );
+
+      window.scrollTo(0, 0);
+
+      try {
+        const dados =
+          await consultarApiJsonp(
+            'buscarProdutoAtualizarEstoque',
+            { idProduto }
+          );
+
+        if (requisicaoAtual !== sequenciaDetalhes) {
+          return;
+        }
+
+        if (!dados || !dados.produto) {
+          throw new Error(
+            'O backend não retornou os detalhes do produto.'
+          );
+        }
+
+        renderizarDetalhes(dados);
+
+      } catch (erro) {
+        if (requisicaoAtual !== sequenciaDetalhes) {
+          return;
+        }
+
+        mostrarStatus(
+          statusDetalhes,
+          erro.message ||
+            'Não foi possível carregar os detalhes.',
+          true
+        );
+      }
+    }
+
+    function voltarParaLista() {
+      sequenciaDetalhes++;
+      telaDetalhes.hidden = true;
+      telaLista.hidden = false;
+
+      requestAnimationFrame(() => {
+        window.scrollTo(0, posicaoLista);
+      });
     }
 
     async function carregarDadosIniciais() {
@@ -601,8 +1398,9 @@
 
       } catch (erro) {
         mostrarStatus(
+          statusLista,
           erro.message ||
-          'Não foi possível carregar o módulo.',
+            'Não foi possível carregar o módulo.',
           true
         );
       }
@@ -611,6 +1409,20 @@
     campoPesquisa.addEventListener(
       'input',
       renderizarProdutos
+    );
+
+    campoResponsavel.addEventListener(
+      'change',
+      () => {
+        memorizarResponsavel(
+          campoResponsavel.value
+        );
+      }
+    );
+
+    botaoVoltar.addEventListener(
+      'click',
+      voltarParaLista
     );
 
     carregarDadosIniciais();
