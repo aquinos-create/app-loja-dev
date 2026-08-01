@@ -294,6 +294,48 @@
       border-radius: 8px;
     }
 
+    .grades-recolhiveis {
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+
+    .grades-recolhiveis summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      font-weight: 700;
+      background: #f9fafb;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .grades-recolhiveis summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .indicador-grades {
+      flex: 0 0 auto;
+      font-size: 20px;
+      line-height: 1;
+      color: #6b7280;
+      transition: transform 0.2s ease;
+    }
+
+    .grades-recolhiveis[open] .indicador-grades {
+      transform: rotate(180deg);
+    }
+
+    .grades-recolhiveis[open] summary {
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .conteudo-grades {
+      padding: 12px;
+    }
+
     .grade {
       margin-top: 12px;
       padding: 14px;
@@ -566,16 +608,28 @@
           </p>
         </section>
 
-        <section
+        <details
           id="secaoGrades"
-          class="secao-detalhes"
+          class="secao-detalhes grades-recolhiveis"
         >
-          <h3 class="titulo-secao">
-            Grades aplicáveis
-          </h3>
+          <summary>
+            <span id="tituloGrades">
+              Grades aplicáveis (0)
+            </span>
 
-          <div id="listaGrades"></div>
-        </section>
+            <span
+              class="indicador-grades"
+              aria-hidden="true"
+            >
+              ⌄
+            </span>
+          </summary>
+
+          <div
+            id="listaGrades"
+            class="conteudo-grades"
+          ></div>
+        </details>
 
         <section class="secao-detalhes">
           <h3 class="titulo-secao">
@@ -672,6 +726,9 @@
 
     const secaoGrades =
       document.getElementById('secaoGrades');
+
+    const tituloGrades =
+      document.getElementById('tituloGrades');
 
     const listaGrades =
       document.getElementById('listaGrades');
@@ -1110,6 +1167,11 @@
     function renderizarGrades(grades) {
       listaGrades.replaceChildren();
 
+      tituloGrades.textContent =
+        `Grades aplicáveis (${grades.length})`;
+
+      secaoGrades.open = false;
+
       const fragmento =
         document.createDocumentFragment();
 
@@ -1232,6 +1294,7 @@
 
       mensagemVariados.hidden = !produtoVariados;
       secaoGrades.hidden = produtoVariados;
+      secaoGrades.open = false;
 
       if (produtoVariados) {
         listaGrades.replaceChildren();
@@ -1244,9 +1307,10 @@
 
       mostrarStatus(
         statusDetalhes,
-        `${tamanhos.length} tamanho(s) carregado(s).`
+        ''
       );
 
+      statusDetalhes.hidden = true;
       conteudoDetalhes.hidden = false;
     }
 
@@ -1259,6 +1323,7 @@
       telaLista.hidden = true;
       telaDetalhes.hidden = false;
       conteudoDetalhes.hidden = true;
+      statusDetalhes.hidden = false;
 
       mostrarStatus(
         statusDetalhes,
