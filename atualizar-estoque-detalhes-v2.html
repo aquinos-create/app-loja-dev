@@ -533,9 +533,9 @@
           <div class="tabela-tamanhos">
             <div class="linha-tamanho cabecalho-tamanhos">
               <span>Tamanho</span>
-              <span class="valor-estoque">Total</span>
-              <span class="valor-estoque">Reservado</span>
               <span class="valor-estoque">Disponível</span>
+              <span class="valor-estoque">Reservado</span>
+              <span class="valor-estoque">Total</span>
             </div>
 
             <div id="listaTamanhos"></div>
@@ -1002,11 +1002,12 @@
       tamanho.className = 'numero-tamanho';
       tamanho.textContent = item.tamanho;
 
-      const total =
+      const disponivel =
         document.createElement('span');
 
-      total.className = 'valor-estoque';
-      total.textContent = item.quantidadeTotal;
+      disponivel.className = 'valor-estoque';
+      disponivel.textContent =
+        item.quantidadeDisponivel;
 
       const reservado =
         document.createElement('span');
@@ -1015,18 +1016,17 @@
       reservado.textContent =
         item.quantidadeReservada;
 
-      const disponivel =
+      const total =
         document.createElement('span');
 
-      disponivel.className = 'valor-estoque';
-      disponivel.textContent =
-        item.quantidadeDisponivel;
+      total.className = 'valor-estoque';
+      total.textContent = item.quantidadeTotal;
 
       linha.append(
         tamanho,
-        total,
+        disponivel,
         reservado,
-        disponivel
+        total
       );
 
       return linha;
