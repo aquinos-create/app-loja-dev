@@ -1622,7 +1622,7 @@
       const campoTotal =
         document.createElement('input');
 
-      campoTotal.type = 'number';
+      campoTotal.type = 'text';
       campoTotal.className = 'campo-total';
       campoTotal.inputMode = 'numeric';
                 campoTotal.enterKeyHint = 'done';
@@ -1653,7 +1653,17 @@
         'aria-label',
         `Salvar quantidade do tamanho ${item.tamanho}`
       );
-      
+
+            campoTotal.addEventListener(
+        'focus',
+        () => {
+          window.setTimeout(() => {
+            campoTotal.select();
+          }, 0);
+        }
+      );
+
+          
              campoTotal.addEventListener(
         'input',
         () => {
