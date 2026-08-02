@@ -814,6 +814,8 @@
 
     const listaAlertas =
       document.getElementById('listaAlertas');
+        let filaSalvamentos =
+      Promise.resolve();
 
     let produtos = [];
     let sequenciaCallback = 0;
@@ -1407,13 +1409,14 @@
         String(disponivelConvertido);
     }
   
-            async function salvarQuantidadeTotalTamanho(
+       async function salvarQuantidadeTotalTamanho(
       idProduto,
       item,
       campoTotal,
       botaoSalvar,
       disponivel,
-      reservado
+      reservado,
+      idUsuarioRecebido
     ) {
       const novaQuantidadeTotal =
         Number(campoTotal.value);
@@ -1423,8 +1426,10 @@
           campoTotal.dataset.valorConfirmado
         );
 
-      const idUsuario =
-        campoResponsavel.value;
+            const idUsuario =
+        String(
+          idUsuarioRecebido || ''
+        ).trim();
 
       if (!idUsuario) {
         statusDetalhes.hidden = false;
@@ -1641,6 +1646,100 @@
       }
     }
 
+
+         function enfileirarSalvamentoQuantidadeTotal(
+      idProduto,
+      item,
+      campoTotal,
+      botaoSalvar,
+      disponivel,
+      reservado,
+      idUsuario
+    ) {
+      if (
+        campoTotal.disabled ||
+        botaoSalvar.dataset.enfileirado ===
+          'true'
+      ) {
+        return;
+      }
+
+      const valorDigitado =
+        campoTotal.value.trim();
+
+      const valorConvertido =
+        Number(valorDigitado);
+
+      const entradaValida =
+        valorDigitado !== '' &&
+        Number.isInteger(valorConvertido) &&
+        valorConvertido >=
+          item.quantidadeReservada &&
+        idUsuario;
+
+      if (!entradaValida) {
+        campoTotal.classList.add(
+          'falha'
+        );
+
+        return;
+      }
+
+      botaoSalvar.dataset.enfileirado =
+        'true';
+
+      campoTotal.disabled = true;
+      botaoSalvar.disabled = true;
+      botaoSalvar.textContent = '…';
+
+      campoTotal.classList.remove(
+        'alterado',
+        'salvo',
+        'falha'
+      );
+
+      filaSalvamentos =
+        filaSalvamentos
+          .catch(erro => {
+            console.error(
+              'A gravação anterior da fila falhou.',
+              erro
+            );
+          })
+          .then(async () => {
+            try {
+              await salvarQuantidadeTotalTamanho(
+                idProduto,
+                item,
+                campoTotal,
+                botaoSalvar,
+                disponivel,
+                reservado,
+                idUsuario
+              );
+
+            } catch (erro) {
+              campoTotal.disabled = false;
+              botaoSalvar.textContent = '✓';
+              campoTotal.classList.add(
+                'falha'
+              );
+
+              statusDetalhes.hidden = false;
+
+              mostrarStatus(
+                statusDetalhes,
+                erro.message ||
+                  'Não foi possível processar a fila de salvamentos.',
+                true
+              );
+
+            } finally {
+              delete botaoSalvar.dataset.enfileirado;
+            }
+          });
+    }
+
     
         function criarLinhaTamanho(
       item,
@@ -1787,13 +1886,14 @@
             return;
           }
 
-          salvarQuantidadeTotalTamanho(
+          enfileirarSalvamentoQuantidadeTotal(
             idProduto,
             item,
             campoTotal,
             botaoSalvar,
             disponivel,
-            reservado
+            reservado,
+            campoResponsavel.value
           );
         }
       );
