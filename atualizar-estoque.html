@@ -401,6 +401,76 @@
     .valor-estoque {
       text-align: center;
     }
+        .editor-total {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .campo-total {
+      width: 42px;
+      min-width: 42px;
+      min-height: 34px;
+      padding: 5px 3px;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      border: 1px solid #9ca3af;
+      border-radius: 7px;
+      appearance: textfield;
+    }
+
+    .campo-total::-webkit-inner-spin-button,
+    .campo-total::-webkit-outer-spin-button {
+      margin: 0;
+      appearance: none;
+    }
+
+    .campo-total:focus {
+      border-color: #2563eb;
+      outline: 2px solid #bfdbfe;
+      outline-offset: 1px;
+    }
+
+    .campo-total.alterado {
+      background: #eff6ff;
+      border-color: #2563eb;
+    }
+
+    .campo-total.salvo {
+      background: #f0fdf4;
+      border-color: #16a34a;
+    }
+
+    .campo-total.falha {
+      background: #fef2f2;
+      border-color: #dc2626;
+    }
+
+    .botao-salvar-total {
+      display: inline-flex;
+      width: 34px;
+      min-width: 34px;
+      height: 34px;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      font-size: 17px;
+      font-weight: 700;
+      background: #166534;
+      color: #ffffff;
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    .botao-salvar-total:disabled {
+      background: #d1d5db;
+      color: #6b7280;
+      cursor: default;
+    }
 
     .alerta-item {
       margin-top: 8px;
@@ -1184,7 +1254,341 @@
       listaGrades.appendChild(fragmento);
     }
 
-    function criarLinhaTamanho(item) {
+            function criarChaveIdempotenteAtualizarEstoque() {
+      let parteAleatoria = '';
+
+      if (
+        window.crypto &&
+        typeof window.crypto.randomUUID ===
+          'function'
+      ) {
+        parteAleatoria =
+          window.crypto
+            .randomUUID()
+            .replace(/-/g, '');
+
+      } else {
+        parteAleatoria =
+          Date.now().toString(36) +
+          Math.random()
+            .toString(36)
+            .slice(2) +
+          Math.random()
+            .toString(36)
+            .slice(2);
+      }
+
+      return (
+        'OPE' +
+        parteAleatoria
+          .replace(/[^a-z0-9]/gi, '')
+          .toUpperCase()
+          .padEnd(16, '0')
+          .slice(0, 64)
+      );
+    }
+
+            function aplicarSaldoConfirmadoNaLinha(
+      item,
+      campoTotal,
+      disponivel,
+      reservado,
+      quantidadeTotal,
+      quantidadeReservada,
+      quantidadeDisponivel
+    ) {
+      const totalConvertido =
+        Number(quantidadeTotal);
+
+      const reservadoConvertido =
+        Number(quantidadeReservada);
+
+      const disponivelConvertido =
+        Number(quantidadeDisponivel);
+
+      const saldoValido =
+        Number.isInteger(totalConvertido) &&
+        Number.isInteger(reservadoConvertido) &&
+        Number.isInteger(disponivelConvertido) &&
+        totalConvertido >= 0 &&
+        reservadoConvertido >= 0 &&
+        disponivelConvertido >= 0 &&
+        totalConvertido >=
+          reservadoConvertido &&
+        totalConvertido -
+          reservadoConvertido ===
+          disponivelConvertido;
+
+      if (!saldoValido) {
+        throw new Error(
+          'O backend retornou um saldo inválido.'
+        );
+      }
+
+      item.quantidadeTotal =
+        totalConvertido;
+
+      item.quantidadeReservada =
+        reservadoConvertido;
+
+      item.quantidadeDisponivel =
+        disponivelConvertido;
+
+      campoTotal.value =
+        String(totalConvertido);
+
+      campoTotal.dataset.valorConfirmado =
+        String(totalConvertido);
+
+      campoTotal.min =
+        String(reservadoConvertido);
+
+      reservado.textContent =
+        String(reservadoConvertido);
+
+      disponivel.textContent =
+        String(disponivelConvertido);
+    }
+  
+            async function salvarQuantidadeTotalTamanho(
+      idProduto,
+      item,
+      campoTotal,
+      botaoSalvar,
+      disponivel,
+      reservado
+    ) {
+      const novaQuantidadeTotal =
+        Number(campoTotal.value);
+
+      const quantidadeTotalEsperada =
+        Number(
+          campoTotal.dataset.valorConfirmado
+        );
+
+      const idUsuario =
+        campoResponsavel.value;
+
+      if (!idUsuario) {
+        statusDetalhes.hidden = false;
+
+        mostrarStatus(
+          statusDetalhes,
+          'Selecione o responsável antes de salvar.',
+          true
+        );
+
+        return;
+      }
+
+      if (
+        !Number.isInteger(novaQuantidadeTotal) ||
+        novaQuantidadeTotal <
+          item.quantidadeReservada
+      ) {
+        campoTotal.classList.add('falha');
+        return;
+      }
+
+      let chaveIdempotente =
+        campoTotal.dataset.chavePendente;
+
+      if (!chaveIdempotente) {
+        chaveIdempotente =
+          criarChaveIdempotenteAtualizarEstoque();
+
+        campoTotal.dataset.chavePendente =
+          chaveIdempotente;
+      }
+
+      campoTotal.disabled = true;
+      botaoSalvar.disabled = true;
+      botaoSalvar.textContent = '…';
+
+      campoTotal.classList.remove(
+        'alterado',
+        'salvo',
+        'falha'
+      );
+
+      try {
+        const dados =
+          await consultarApiJsonp(
+            'gravarQuantidadeTotalAtualizarEstoque',
+            {
+              idProduto,
+              tamanho:
+                String(item.tamanho),
+              novaQuantidadeTotal:
+                String(novaQuantidadeTotal),
+              quantidadeTotalEsperada:
+                String(
+                  quantidadeTotalEsperada
+                ),
+              idUsuario,
+              chaveIdempotente
+            }
+          );
+
+        const gravacaoConfirmada =
+          dados.estado === 'GRAVADO' ||
+          dados.estado === 'SEM_ALTERACAO' ||
+          (
+            dados.estado ===
+              'REPETICAO_IDEMPOTENTE' &&
+            dados.saldoFinalConfirmado === true
+          );
+
+        if (gravacaoConfirmada) {
+          aplicarSaldoConfirmadoNaLinha(
+            item,
+            campoTotal,
+            disponivel,
+            reservado,
+            dados.novaQuantidadeTotal,
+            dados.quantidadeReservada,
+            dados.quantidadeDisponivel
+          );
+
+          delete campoTotal.dataset.chavePendente;
+
+          campoTotal.classList.add(
+            'salvo'
+          );
+
+          window.setTimeout(() => {
+            campoTotal.classList.remove(
+              'salvo'
+            );
+          }, 1400);
+
+          statusDetalhes.hidden = true;
+          return;
+        }
+
+        if (
+          dados.estado ===
+          'CONFLITO_SALDO'
+        ) {
+          aplicarSaldoConfirmadoNaLinha(
+            item,
+            campoTotal,
+            disponivel,
+            reservado,
+            dados.quantidadeTotalAtual,
+            dados.quantidadeReservada,
+            dados.quantidadeDisponivel
+          );
+
+          delete campoTotal.dataset.chavePendente;
+
+          campoTotal.classList.add(
+            'falha'
+          );
+
+          statusDetalhes.hidden = false;
+
+          mostrarStatus(
+            statusDetalhes,
+            `O tamanho ${item.tamanho} foi alterado em outro aparelho. ` +
+              'O saldo atual foi carregado.',
+            true
+          );
+
+          return;
+        }
+
+        if (
+          dados.estado ===
+          'BLOQUEADO_RESERVA'
+        ) {
+          aplicarSaldoConfirmadoNaLinha(
+            item,
+            campoTotal,
+            disponivel,
+            reservado,
+            dados.quantidadeAnterior,
+            dados.quantidadeReservada,
+            dados.quantidadeDisponivel
+          );
+
+          delete campoTotal.dataset.chavePendente;
+
+          campoTotal.classList.add(
+            'falha'
+          );
+
+          statusDetalhes.hidden = false;
+
+          mostrarStatus(
+            statusDetalhes,
+            `O total do tamanho ${item.tamanho} não pode ficar ` +
+              `abaixo dos ${dados.quantidadeReservada} reservados.`,
+            true
+          );
+
+          return;
+        }
+
+        throw new Error(
+          dados.estado ===
+            'REPETICAO_IDEMPOTENTE'
+            ? 'O saldo mudou depois da tentativa anterior. Reabra o produto.'
+            : 'A gravação não foi confirmada pelo backend.'
+        );
+
+      } catch (erro) {
+        campoTotal.classList.add(
+          'falha'
+        );
+
+        statusDetalhes.hidden = false;
+
+        mostrarStatus(
+          statusDetalhes,
+          erro.message ||
+            'Não foi possível salvar a quantidade.',
+          true
+        );
+
+      } finally {
+        campoTotal.disabled = false;
+        botaoSalvar.textContent = '✓';
+
+        const valorDigitado =
+          campoTotal.value.trim();
+
+        const valorAtual =
+          Number(valorDigitado);
+
+        const valorConfirmado =
+          Number(
+            campoTotal.dataset.valorConfirmado
+          );
+
+        const podeSalvar =
+          valorDigitado !== '' &&
+          Number.isInteger(valorAtual) &&
+          valorAtual >=
+            item.quantidadeReservada &&
+          valorAtual !==
+            valorConfirmado;
+
+        botaoSalvar.disabled =
+          !podeSalvar;
+
+        campoTotal.classList.toggle(
+          'alterado',
+          podeSalvar
+        );
+      }
+    }
+
+    
+        function criarLinhaTamanho(
+      item,
+      idProduto
+    ) {
       const linha =
         document.createElement('div');
 
@@ -1210,23 +1614,155 @@
       reservado.textContent =
         item.quantidadeReservada;
 
-      const total =
-        document.createElement('span');
+           const editorTotal =
+        document.createElement('div');
 
-      total.className = 'valor-estoque';
-      total.textContent = item.quantidadeTotal;
+      editorTotal.className = 'editor-total';
+
+      const campoTotal =
+        document.createElement('input');
+
+      campoTotal.type = 'number';
+      campoTotal.className = 'campo-total';
+      campoTotal.inputMode = 'numeric';
+      campoTotal.min =
+        String(item.quantidadeReservada);
+      campoTotal.step = '1';
+      campoTotal.value =
+        String(item.quantidadeTotal);
+
+      campoTotal.dataset.valorConfirmado =
+        String(item.quantidadeTotal);
+
+      campoTotal.setAttribute(
+        'aria-label',
+        `Quantidade total do tamanho ${item.tamanho}`
+      );
+
+      const botaoSalvar =
+        document.createElement('button');
+
+      botaoSalvar.type = 'button';
+      botaoSalvar.className =
+        'botao-salvar-total';
+      botaoSalvar.textContent = '✓';
+      botaoSalvar.disabled = true;
+
+      botaoSalvar.setAttribute(
+        'aria-label',
+        `Salvar quantidade do tamanho ${item.tamanho}`
+      );
+      
+             campoTotal.addEventListener(
+        'input',
+        () => {
+          delete campoTotal.dataset.chavePendente;
+
+          statusDetalhes.hidden = true;
+          const valorDigitado =
+            campoTotal.value.trim();
+
+          const valorConvertido =
+            Number(valorDigitado);
+
+          const valorConfirmado =
+            Number(
+              campoTotal.dataset.valorConfirmado
+            );
+
+          const valorValido =
+            valorDigitado !== '' &&
+            Number.isInteger(valorConvertido) &&
+            valorConvertido >=
+              item.quantidadeReservada;
+
+          campoTotal.classList.remove(
+            'salvo'
+          );
+
+          if (!valorValido) {
+            campoTotal.classList.remove(
+              'alterado'
+            );
+
+            campoTotal.classList.toggle(
+              'falha',
+              valorDigitado !== ''
+            );
+
+            botaoSalvar.disabled = true;
+            return;
+          }
+
+          campoTotal.classList.remove(
+            'falha'
+          );
+
+          const foiAlterado =
+            valorConvertido !==
+            valorConfirmado;
+
+          campoTotal.classList.toggle(
+            'alterado',
+            foiAlterado
+          );
+
+          botaoSalvar.disabled =
+            !foiAlterado;
+        }
+      );
+
+                botaoSalvar.addEventListener(
+        'click',
+        () => {
+          if (botaoSalvar.disabled) {
+            return;
+          }
+
+          salvarQuantidadeTotalTamanho(
+            idProduto,
+            item,
+            campoTotal,
+            botaoSalvar,
+            disponivel,
+            reservado
+          );
+        }
+      );
+
+      campoTotal.addEventListener(
+        'keydown',
+        evento => {
+          if (
+            evento.key === 'Enter' &&
+            !botaoSalvar.disabled
+          ) {
+            evento.preventDefault();
+            botaoSalvar.click();
+          }
+        }
+      );
+
+      
+      editorTotal.append(
+        campoTotal,
+        botaoSalvar
+      );
 
       linha.append(
         tamanho,
         disponivel,
         reservado,
-        total
+        editorTotal
       );
 
       return linha;
     }
 
-    function renderizarTamanhos(tamanhos) {
+        function renderizarTamanhos(
+      tamanhos,
+      idProduto
+    ) {
       listaTamanhos.replaceChildren();
 
       const fragmento =
@@ -1234,7 +1770,10 @@
 
       tamanhos.forEach(item => {
         fragmento.appendChild(
-          criarLinhaTamanho(item)
+                    criarLinhaTamanho(
+            item,
+            idProduto
+          )
         );
       });
 
@@ -1302,7 +1841,10 @@
         renderizarGrades(grades);
       }
 
-      renderizarTamanhos(tamanhos);
+            renderizarTamanhos(
+        tamanhos,
+        produto.idProduto
+      );
       renderizarAlertas(alertas);
 
       mostrarStatus(
