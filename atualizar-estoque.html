@@ -740,6 +740,9 @@
     const CHAVE_RESPONSAVEL =
       'APP_LOJA_RESPONSAVEL_ATUALIZAR_ESTOQUE';
 
+        const CHAVE_PRODUTO_ABERTO =
+      'APP_LOJA_PRODUTO_ABERTO_ATUALIZAR_ESTOQUE';
+
     const telaLista =
       document.getElementById('telaLista');
 
@@ -1161,6 +1164,60 @@
       );
     }
 
+        function memorizarProdutoAberto(
+      idProduto
+    ) {
+      try {
+        sessionStorage.setItem(
+          CHAVE_PRODUTO_ABERTO,
+          idProduto
+        );
+      } catch (erro) {
+        console.warn(
+          'Não foi possível memorizar o produto aberto.',
+          erro
+        );
+      }
+    }
+
+    function obterProdutoAbertoMemorizado() {
+      try {
+        const idProduto =
+          String(
+            sessionStorage.getItem(
+              CHAVE_PRODUTO_ABERTO
+            ) || ''
+          ).trim();
+
+        if (!/^PRD\d{6}$/.test(idProduto)) {
+          sessionStorage.removeItem(
+            CHAVE_PRODUTO_ABERTO
+          );
+
+          return '';
+        }
+
+        return idProduto;
+
+      } catch (erro) {
+        return '';
+      }
+    }
+
+    function esquecerProdutoAberto() {
+      try {
+        sessionStorage.removeItem(
+          CHAVE_PRODUTO_ABERTO
+        );
+      } catch (erro) {
+        console.warn(
+          'Não foi possível limpar o produto memorizado.',
+          erro
+        );
+      }
+    }
+
+    
     function obterNomeBaseGrade(nomePadrao) {
       const nomeCompleto =
         String(nomePadrao || '').trim();
@@ -1903,6 +1960,7 @@
         }
 
         renderizarDetalhes(dados);
+        memorizarProdutoAberto(idProduto);
 
       } catch (erro) {
         if (requisicaoAtual !== sequenciaDetalhes) {
@@ -1920,6 +1978,7 @@
 
     function voltarParaLista() {
       sequenciaDetalhes++;
+      esquecerProdutoAberto();
       telaDetalhes.hidden = true;
       telaLista.hidden = false;
 
@@ -1946,8 +2005,28 @@
             : []
         );
 
-        campoPesquisa.disabled = false;
+                campoPesquisa.disabled = false;
         renderizarProdutos();
+
+        const idProdutoMemorizado =
+          obterProdutoAbertoMemorizado();
+
+        if (idProdutoMemorizado) {
+          const produtoAindaAtivo =
+            produtos.some(
+              produto =>
+                produto.idProduto ===
+                idProdutoMemorizado
+            );
+
+          if (produtoAindaAtivo) {
+            await abrirProduto(
+              idProdutoMemorizado
+            );
+          } else {
+            esquecerProdutoAberto();
+          }
+        }
 
       } catch (erro) {
         mostrarStatus(
