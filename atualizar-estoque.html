@@ -2023,12 +2023,17 @@
             await abrirProduto(
               idProdutoMemorizado
             );
-          } else {
+                    } else {
             esquecerProdutoAberto();
+            telaDetalhes.hidden = true;
+            telaLista.hidden = false;
           }
         }
 
-      } catch (erro) {
+        } catch (erro) {
+        telaDetalhes.hidden = true;
+        telaLista.hidden = false;
+
         mostrarStatus(
           statusLista,
           erro.message ||
@@ -2056,6 +2061,20 @@
       'click',
       voltarParaLista
     );
+    const idProdutoAoCarregar =
+      obterProdutoAbertoMemorizado();
+
+    if (idProdutoAoCarregar) {
+      telaLista.hidden = true;
+      telaDetalhes.hidden = false;
+      conteudoDetalhes.hidden = true;
+      statusDetalhes.hidden = false;
+
+      mostrarStatus(
+        statusDetalhes,
+        'Atualizando produto...'
+      );
+    }
 
     carregarDadosIniciais();
   </script>
