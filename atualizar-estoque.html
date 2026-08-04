@@ -171,6 +171,41 @@
       color: #b91c1c !important;
     }
 
+        .acao-desfazer {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 2px;
+      padding: 9px 10px;
+      font-size: 14px;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+    }
+
+    .acao-desfazer[hidden] {
+      display: none;
+    }
+
+    .botao-desfazer {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      font-weight: 700;
+      background: #065f46;
+      color: #ffffff;
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    .botao-desfazer:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    
     .secao-lista,
     .secao-detalhes {
       margin-top: 22px;
@@ -1408,16 +1443,384 @@
       disponivel.textContent =
         String(disponivelConvertido);
     }
-  
+
+      function criarControladorDesfazerLinha(
+  item,
+  campoTotal,
+  botaoSalvar,
+  disponivel,
+  reservado,
+  painelDesfazer,
+  textoDesfazer,
+  botaoDesfazer
+) {
+  let operacaoAtual = null;
+  let temporizador = null;
+  let requisicaoEmAndamento = false;
+
+  function limparTemporizador() {
+    if (temporizador !== null) {
+      window.clearInterval(temporizador);
+      temporizador = null;
+    }
+  }
+
+  function ocultarDesfazer() {
+    limparTemporizador();
+    operacaoAtual = null;
+    painelDesfazer.hidden = true;
+    botaoDesfazer.disabled = false;
+    botaoDesfazer.textContent = 'Desfazer';
+  }
+
+  function atualizarContador() {
+    if (!operacaoAtual) {
+      ocultarDesfazer();
+      return;
+    }
+
+    const milissegundosRestantes =
+      operacaoAtual.expiraEm - Date.now();
+
+    if (milissegundosRestantes <= 0) {
+      ocultarDesfazer();
+      return;
+    }
+
+    const segundosRestantes =
+      Math.ceil(
+        milissegundosRestantes / 1000
+      );
+
+    textoDesfazer.textContent =
+      `Tamanho ${item.tamanho} atualizado.`;
+
+    botaoDesfazer.textContent =
+      `Desfazer (${segundosRestantes}s)`;
+  }
+
+  function oferecerDesfazer(dados) {
+    const idMovimentacaoOriginal =
+      String(
+        dados && dados.idMovimentacao
+          ? dados.idMovimentacao
+          : ''
+      ).trim();
+
+    const quantidadeTotalEsperada =
+      Number(
+        dados && dados.novaQuantidadeTotal
+      );
+
+    const criadoEm =
+      Date.parse(
+        dados && dados.atualizadoEm
+          ? dados.atualizadoEm
+          : ''
+      );
+
+    if (
+      !dados ||
+      dados.estado !== 'GRAVADO' ||
+      !/^MOV\d{6}$/.test(
+        idMovimentacaoOriginal
+      ) ||
+      !Number.isInteger(
+        quantidadeTotalEsperada
+      ) ||
+      !Number.isFinite(criadoEm)
+    ) {
+      ocultarDesfazer();
+      return;
+    }
+
+    const expiraEm =
+      criadoEm + 10000;
+
+    if (expiraEm <= Date.now()) {
+      ocultarDesfazer();
+      return;
+    }
+
+    limparTemporizador();
+
+    operacaoAtual = {
+      idMovimentacaoOriginal,
+      quantidadeTotalEsperada,
+      chaveIdempotente: '',
+      expiraEm
+    };
+
+    painelDesfazer.hidden = false;
+    botaoDesfazer.disabled = false;
+
+    atualizarContador();
+
+    temporizador =
+      window.setInterval(
+        atualizarContador,
+        250
+      );
+  }
+
+  async function executarDesfazer() {
+    const operacao = operacaoAtual;
+
+    if (
+      !operacao ||
+      requisicaoEmAndamento ||
+      campoTotal.disabled
+    ) {
+      return;
+    }
+
+    if (Date.now() >= operacao.expiraEm) {
+      ocultarDesfazer();
+      return;
+    }
+
+    const idUsuario =
+      String(
+        campoResponsavel.value || ''
+      ).trim();
+
+    if (!idUsuario) {
+      statusDetalhes.hidden = false;
+
+      mostrarStatus(
+        statusDetalhes,
+        'Selecione o responsável antes de desfazer.',
+        true
+      );
+
+      return;
+    }
+
+    if (!operacao.chaveIdempotente) {
+      operacao.chaveIdempotente =
+        criarChaveIdempotenteAtualizarEstoque();
+    }
+
+    requisicaoEmAndamento = true;
+    botaoDesfazer.disabled = true;
+    campoTotal.disabled = true;
+    botaoSalvar.disabled = true;
+    statusDetalhes.hidden = true;
+
+    try {
+      const dados =
+        await consultarApiJsonp(
+          'desfazerQuantidadeTotalAtualizarEstoque',
+          {
+            idMovimentacaoOriginal:
+              operacao.idMovimentacaoOriginal,
+            quantidadeTotalEsperada:
+              String(
+                operacao.quantidadeTotalEsperada
+              ),
+            idUsuario,
+            chaveIdempotente:
+              operacao.chaveIdempotente
+          }
+        );
+
+      const desfazimentoConfirmado =
+        dados.estado === 'DESFEITO' ||
+        (
+          dados.estado ===
+            'REPETICAO_IDEMPOTENTE' &&
+          dados.saldoFinalConfirmado === true
+        );
+
+      if (desfazimentoConfirmado) {
+        aplicarSaldoConfirmadoNaLinha(
+          item,
+          campoTotal,
+          disponivel,
+          reservado,
+          dados.quantidadeRestaurada,
+          dados.quantidadeReservada,
+          dados.quantidadeDisponivel
+        );
+
+        ocultarDesfazer();
+
+        campoTotal.classList.remove(
+          'alterado',
+          'falha'
+        );
+
+        campoTotal.classList.add('salvo');
+
+        window.setTimeout(() => {
+          campoTotal.classList.remove('salvo');
+        }, 1400);
+
+        statusDetalhes.hidden = true;
+        return;
+      }
+
+      if (dados.estado === 'JA_DESFEITO') {
+        aplicarSaldoConfirmadoNaLinha(
+          item,
+          campoTotal,
+          disponivel,
+          reservado,
+          dados.quantidadeTotalAtual,
+          dados.quantidadeReservada,
+          dados.quantidadeDisponivel
+        );
+
+        ocultarDesfazer();
+        statusDetalhes.hidden = true;
+        return;
+      }
+
+      if (dados.estado === 'PRAZO_EXPIRADO') {
+        ocultarDesfazer();
+        statusDetalhes.hidden = false;
+
+        mostrarStatus(
+          statusDetalhes,
+          'O prazo de 10 segundos para desfazer terminou.'
+        );
+
+        return;
+      }
+
+      if (dados.estado === 'CONFLITO_SALDO') {
+        aplicarSaldoConfirmadoNaLinha(
+          item,
+          campoTotal,
+          disponivel,
+          reservado,
+          dados.quantidadeTotalAtual,
+          dados.quantidadeReservada,
+          dados.quantidadeDisponivel
+        );
+
+        ocultarDesfazer();
+        campoTotal.classList.add('falha');
+        statusDetalhes.hidden = false;
+
+        mostrarStatus(
+          statusDetalhes,
+          `O tamanho ${item.tamanho} recebeu outra alteração ` +
+            'e não pode mais ser desfeito.',
+          true
+        );
+
+        return;
+      }
+
+      if (dados.estado === 'BLOQUEADO_RESERVA') {
+        aplicarSaldoConfirmadoNaLinha(
+          item,
+          campoTotal,
+          disponivel,
+          reservado,
+          dados.quantidadeTotalAtual,
+          dados.quantidadeReservada,
+          dados.quantidadeDisponivel
+        );
+
+        ocultarDesfazer();
+        campoTotal.classList.add('falha');
+        statusDetalhes.hidden = false;
+
+        mostrarStatus(
+          statusDetalhes,
+          `Não é possível desfazer: existem ` +
+            `${dados.quantidadeReservada} reservados.`,
+          true
+        );
+
+        return;
+      }
+
+      throw new Error(
+        dados.estado ===
+          'CONFLITO_IDEMPOTENCIA'
+          ? 'A tentativa de desfazer entrou em conflito. Reabra o produto.'
+          : 'O desfazimento não foi confirmado pelo backend.'
+      );
+
+    } catch (erro) {
+      campoTotal.classList.add('falha');
+      statusDetalhes.hidden = false;
+
+      mostrarStatus(
+        statusDetalhes,
+        erro.message ||
+          'Não foi possível desfazer a alteração.',
+        true
+      );
+
+      if (Date.now() >= operacao.expiraEm) {
+        ocultarDesfazer();
+      }
+
+    } finally {
+      requisicaoEmAndamento = false;
+      campoTotal.disabled = false;
+
+      const valorDigitado =
+        campoTotal.value.trim();
+
+      const valorAtual =
+        Number(valorDigitado);
+
+      const valorConfirmado =
+        Number(
+          campoTotal.dataset.valorConfirmado
+        );
+
+      const podeSalvar =
+        valorDigitado !== '' &&
+        Number.isInteger(valorAtual) &&
+        valorAtual >=
+          item.quantidadeReservada &&
+        valorAtual !== valorConfirmado;
+
+      botaoSalvar.disabled =
+        !podeSalvar;
+
+      campoTotal.classList.toggle(
+        'alterado',
+        podeSalvar
+      );
+
+      if (
+        operacaoAtual === operacao &&
+        Date.now() < operacao.expiraEm
+      ) {
+        botaoDesfazer.disabled = false;
+      }
+    }
+  }
+
+  botaoDesfazer.addEventListener(
+    'click',
+    executarDesfazer
+  );
+
+  return {
+    oferecer: oferecerDesfazer,
+    cancelar: ocultarDesfazer
+  };
+}
+    
        async function salvarQuantidadeTotalTamanho(
       idProduto,
       item,
       campoTotal,
       botaoSalvar,
       disponivel,
-      reservado,
-      idUsuarioRecebido
+            reservado,
+      idUsuarioRecebido,
+      controladorDesfazer
     ) {
+         
       const novaQuantidadeTotal =
         Number(campoTotal.value);
 
@@ -1517,6 +1920,20 @@
           campoTotal.classList.add(
             'salvo'
           );
+
+                    if (controladorDesfazer) {
+            if (dados.estado === 'GRAVADO') {
+              controladorDesfazer.oferecer(
+                dados
+              );
+
+            } else if (
+              dados.estado ===
+                'SEM_ALTERACAO'
+            ) {
+              controladorDesfazer.cancelar();
+            }
+          }
 
           window.setTimeout(() => {
             campoTotal.classList.remove(
@@ -1652,9 +2069,10 @@
       item,
       campoTotal,
       botaoSalvar,
-      disponivel,
+            disponivel,
       reservado,
-      idUsuario
+      idUsuario,
+      controladorDesfazer
     ) {
       if (
         campoTotal.disabled ||
@@ -1715,7 +2133,8 @@
                 botaoSalvar,
                 disponivel,
                 reservado,
-                idUsuario
+                idUsuario,
+                controladorDesfazer
               );
 
             } catch (erro) {
@@ -1809,6 +2228,48 @@
         'aria-label',
         `Salvar quantidade do tamanho ${item.tamanho}`
       );
+                const painelDesfazer =
+        document.createElement('div');
+
+      painelDesfazer.className =
+        'acao-desfazer';
+
+      painelDesfazer.hidden = true;
+
+      const textoDesfazer =
+        document.createElement('span');
+
+      const botaoDesfazer =
+        document.createElement('button');
+
+      botaoDesfazer.type = 'button';
+      botaoDesfazer.className =
+        'botao-desfazer';
+
+      botaoDesfazer.textContent =
+        'Desfazer';
+
+      botaoDesfazer.setAttribute(
+        'aria-label',
+        `Desfazer alteração do tamanho ${item.tamanho}`
+      );
+
+      painelDesfazer.append(
+        textoDesfazer,
+        botaoDesfazer
+      );
+
+      const controladorDesfazer =
+        criarControladorDesfazerLinha(
+          item,
+          campoTotal,
+          botaoSalvar,
+          disponivel,
+          reservado,
+          painelDesfazer,
+          textoDesfazer,
+          botaoDesfazer
+        );
 
             campoTotal.addEventListener(
         'focus',
@@ -1823,7 +2284,9 @@
              campoTotal.addEventListener(
         'input',
         () => {
-          delete campoTotal.dataset.chavePendente;
+                    delete campoTotal.dataset.chavePendente;
+
+          controladorDesfazer.cancelar();
 
           statusDetalhes.hidden = true;
           const valorDigitado =
@@ -1893,7 +2356,8 @@
             botaoSalvar,
             disponivel,
             reservado,
-            campoResponsavel.value
+            campoResponsavel.value,
+            controladorDesfazer
           );
         }
       );
@@ -1917,11 +2381,12 @@
         botaoSalvar
       );
 
-      linha.append(
+        linha.append(
         tamanho,
         disponivel,
         reservado,
-        editorTotal
+        editorTotal,
+        painelDesfazer
       );
 
       return linha;
