@@ -258,6 +258,55 @@
       color: #6b7280;
     }
 
+    .produto-com-favorito {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.produto-com-favorito:last-child {
+  border-bottom: 0;
+}
+
+.produto-com-favorito .produto {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  border-bottom: 0;
+}
+
+.botao-favorito {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  font-size: 27px;
+  line-height: 1;
+  background: transparent;
+  color: #9ca3af;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.botao-favorito:hover,
+.botao-favorito:focus-visible {
+  background: #fef3c7;
+  color: #d97706;
+  outline: none;
+}
+
+.botao-favorito.ativo {
+  color: #f59e0b;
+}
+
+.botao-favorito:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
     .cabecalho-detalhes {
       display: flex;
       align-items: center;
@@ -941,65 +990,431 @@
       });
     }
 
+    const modelosFavoritosEmAlteracao =
+  new Set();
+
+async function alterarFavoritoProduto(
+  produto
+) {
+  const modelo =
+    String(produto.modelo || '').trim();
+
+  const idUsuario =
+    String(
+      campoResponsavel.value || ''
+    ).trim();
+
+  if (!idUsuario) {
+    mostrarStatus(
+      statusLista,
+      'Selecione o responsável antes de alterar os Favoritos.',
+      true
+    );
+
+    campoResponsavel.focus();
+    return;
+  }
+
+  if (
+    modelosFavoritosEmAlteracao.has(modelo)
+  ) {
+    return;
+  }
+
+  const novoFavorito =
+    produto.favorito !== true;
+
+  modelosFavoritosEmAlteracao.add(modelo);
+  renderizarProdutos();
+
+  mostrarStatus(
+    statusLista,
+    novoFavorito
+      ? `Adicionando ${modelo} aos Favoritos...`
+      : `Removendo ${modelo} dos Favoritos...`
+  );
+
+  let mensagemFinal = '';
+let erroFinal = false;
+
+try {
+  const dados =
+    await consultarApiJsonp(
+      'alterarFavoritoAtualizarEstoque',
+      {
+        modelo,
+        favorito:
+          String(novoFavorito),
+        idUsuario
+      }
+    );
+
+  if (
+    !dados ||
+    !Array.isArray(
+      dados.modelosFavoritos
+    )
+  ) {
+    throw new Error(
+      'O backend não devolveu a lista atualizada de Favoritos.'
+    );
+  }
+
+  const modelosFavoritos =
+    new Set(
+      dados.modelosFavoritos
+    );
+
+  produtos.forEach(item => {
+    item.favorito =
+      modelosFavoritos.has(
+        item.modelo
+      );
+  });
+
+  mensagemFinal =
+    dados.favorito
+      ? `${modelo} adicionado aos Favoritos.`
+      : `${modelo} removido dos Favoritos.`;
+} catch (erro) {
+  erroFinal = true;
+
+  mensagemFinal =
+    erro.message ||
+    'Não foi possível alterar o Favorito.';
+} finally {
+  modelosFavoritosEmAlteracao.delete(
+    modelo
+  );
+
+  renderizarProdutos();
+
+  mostrarStatus(
+    statusLista,
+    mensagemFinal,
+    erroFinal
+  );
+}
+    
     function criarLinhaProduto(produto) {
-      const linha =
-        document.createElement('button');
+  const envoltorio =
+    document.createElement('div');
 
-      linha.type = 'button';
-      linha.className = 'produto';
+  envoltorio.className =
+    'produto-com-favorito';
 
-      linha.setAttribute(
-        'aria-label',
-        `Abrir ${produto.modelo}, cor ${produto.cor}`
+  const linha =
+    document.createElement('button');
+
+  linha.type = 'button';
+  linha.className = 'produto';
+
+  linha.setAttribute(
+    'aria-label',
+    `Abrir ${produto.modelo}, cor ${produto.cor}`
+  );
+
+  const textos =
+    document.createElement('div');
+
+  textos.className = 'produto-textos';
+
+  const modelo =
+    document.createElement('div');
+
+  modelo.className = 'modelo';
+  modelo.textContent = produto.modelo;
+
+  const cor =
+    document.createElement('div');
+
+  cor.className = 'cor';
+  cor.textContent = produto.cor;
+
+  const final =
+    document.createElement('div');
+
+  final.className = 'produto-final';
+
+  const tipoEntrada =
+    document.createElement('span');
+
+  tipoEntrada.className = 'tipo-entrada';
+  tipoEntrada.textContent =
+    produto.formaEntradaEstoque;
+
+  const seta =
+    document.createElement('span');
+
+  seta.className = 'seta';
+  seta.setAttribute(
+    'aria-hidden',
+    'true'
+  );
+  seta.textContent = '›';
+
+  const botaoFavorito =
+    document.createElement('button');
+
+  botaoFavorito.type = 'button';
+  botaoFavorito.className =
+    'botao-favorito';
+
+  botaoFavorito.classList.toggle(
+    'ativo',
+    produto.favorito === true
+  );
+
+  botaoFavorito.textContent =
+    produto.favorito === true
+      ? '★'
+      : '☆';
+
+  botaoFavorito.setAttribute(
+    'aria-label',
+    produto.favorito === true
+      ? `Remover ${produto.modelo} dos Favoritos`
+      : `Adicionar ${produto.modelo} aos Favoritos`
+  );
+
+  botaoFavorito.title =
+    produto.favorito === true
+      ? 'Remover dos Favoritos'
+      : 'Adicionar aos Favoritos';
+
+  botaoFavorito.disabled =
+    modelosFavoritosEmAlteracao.has(
+      produto.modelo
+    );
+
+  textos.append(modelo, cor);
+  final.append(tipoEntrada, seta);
+  linha.append(textos, final);
+
+  linha.addEventListener('click', () => {
+    abrirProduto(produto.idProduto);
+  });
+
+  botaoFavorito.addEventListener(
+    'click',
+    () => {
+      alterarFavoritoProduto(produto);
+    }
+  );
+
+  envoltorio.append(
+    linha,
+    botaoFavorito
+  );
+
+  return envoltorio;
+}
+
+    function criarLinhaFavorito(
+  produtosDoModelo
+) {
+  const produtoRepresentante =
+    produtosDoModelo[0];
+
+  const quantidadeCores =
+    produtosDoModelo.length;
+
+  const envoltorio =
+    document.createElement('div');
+
+  envoltorio.className =
+    'produto-com-favorito';
+
+  const linha =
+    document.createElement('button');
+
+  linha.type = 'button';
+  linha.className = 'produto';
+
+  linha.setAttribute(
+    'aria-label',
+    `Mostrar as cores de ${produtoRepresentante.modelo}`
+  );
+
+  const textos =
+    document.createElement('div');
+
+  textos.className = 'produto-textos';
+
+  const modelo =
+    document.createElement('div');
+
+  modelo.className = 'modelo';
+  modelo.textContent =
+    produtoRepresentante.modelo;
+
+  const orientacao =
+    document.createElement('div');
+
+  orientacao.className = 'cor';
+  orientacao.textContent =
+    'Toque para escolher a cor';
+
+  const final =
+    document.createElement('div');
+
+  final.className = 'produto-final';
+
+  const quantidade =
+    document.createElement('span');
+
+  quantidade.className = 'tipo-entrada';
+  quantidade.textContent =
+    quantidadeCores === 1
+      ? '1 cor'
+      : `${quantidadeCores} cores`;
+
+  const seta =
+    document.createElement('span');
+
+  seta.className = 'seta';
+  seta.setAttribute(
+    'aria-hidden',
+    'true'
+  );
+  seta.textContent = '›';
+
+  const botaoFavorito =
+    document.createElement('button');
+
+  botaoFavorito.type = 'button';
+  botaoFavorito.className =
+    'botao-favorito ativo';
+  botaoFavorito.textContent = '★';
+
+  botaoFavorito.setAttribute(
+    'aria-label',
+    `Remover ${produtoRepresentante.modelo} dos Favoritos`
+  );
+
+  botaoFavorito.title =
+    'Remover dos Favoritos';
+
+  botaoFavorito.disabled =
+    modelosFavoritosEmAlteracao.has(
+      produtoRepresentante.modelo
+    );
+
+  textos.append(
+    modelo,
+    orientacao
+  );
+
+  final.append(
+    quantidade,
+    seta
+  );
+
+  linha.append(
+    textos,
+    final
+  );
+
+  linha.addEventListener('click', () => {
+    campoPesquisa.value =
+      produtoRepresentante.modelo;
+
+    renderizarProdutos();
+
+    listaProdutos.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  });
+
+  botaoFavorito.addEventListener(
+    'click',
+    () => {
+      alterarFavoritoProduto(
+        produtoRepresentante
+      );
+    }
+  );
+
+  envoltorio.append(
+    linha,
+    botaoFavorito
+  );
+
+  return envoltorio;
+}
+
+function renderizarFavoritos(termo) {
+  const favoritosPorModelo =
+    new Map();
+
+  produtos
+    .filter(
+      produto =>
+        produto.favorito === true
+    )
+    .forEach(produto => {
+      if (
+        !favoritosPorModelo.has(
+          produto.modelo
+        )
+      ) {
+        favoritosPorModelo.set(
+          produto.modelo,
+          []
+        );
+      }
+
+      favoritosPorModelo
+        .get(produto.modelo)
+        .push(produto);
+    });
+
+  const grupos =
+    Array.from(
+      favoritosPorModelo.values()
+    )
+      .filter(
+        produtosDoModelo =>
+          !termo ||
+          produtosDoModelo.some(
+            produto =>
+              normalizarBusca(
+                produto.modelo +
+                ' ' +
+                produto.cor
+              ).includes(termo)
+          )
+      )
+      .sort(
+        (grupoA, grupoB) =>
+          grupoA[0].modelo.localeCompare(
+            grupoB[0].modelo,
+            'pt-BR',
+            { sensitivity: 'base' }
+          )
       );
 
-      const textos =
-        document.createElement('div');
+  listaFavoritos.replaceChildren();
 
-      textos.className = 'produto-textos';
+  const fragmento =
+    document.createDocumentFragment();
 
-      const modelo =
-        document.createElement('div');
+  grupos.forEach(produtosDoModelo => {
+    fragmento.appendChild(
+      criarLinhaFavorito(
+        produtosDoModelo
+      )
+    );
+  });
 
-      modelo.className = 'modelo';
-      modelo.textContent = produto.modelo;
+  listaFavoritos.appendChild(
+    fragmento
+  );
 
-      const cor =
-        document.createElement('div');
-
-      cor.className = 'cor';
-      cor.textContent = produto.cor;
-
-      const final =
-        document.createElement('div');
-
-      final.className = 'produto-final';
-
-      const tipoEntrada =
-        document.createElement('span');
-
-      tipoEntrada.className = 'tipo-entrada';
-      tipoEntrada.textContent =
-        produto.formaEntradaEstoque;
-
-      const seta =
-        document.createElement('span');
-
-      seta.className = 'seta';
-      seta.setAttribute('aria-hidden', 'true');
-      seta.textContent = '›';
-
-      textos.append(modelo, cor);
-      final.append(tipoEntrada, seta);
-      linha.append(textos, final);
-
-      linha.addEventListener('click', () => {
-        abrirProduto(produto.idProduto);
-      });
-
-      return linha;
-    }
-
+  return grupos.length;
+}
+    
     function renderizarLista(
       elemento,
       itens
@@ -1031,61 +1446,59 @@
     }
 
     function renderizarProdutos() {
-      const termo =
-        normalizarBusca(campoPesquisa.value);
+  const termo =
+    normalizarBusca(
+      campoPesquisa.value
+    );
 
-      const produtosFiltrados =
-        (termo
-          ? produtos.filter(produto =>
-              normalizarBusca(
-                produto.modelo + ' ' + produto.cor
-              ).includes(termo)
-            )
-          : [...produtos]
-        ).sort(compararProdutos);
+  const produtosFiltrados =
+    (
+      termo
+        ? produtos.filter(produto =>
+            normalizarBusca(
+              produto.modelo +
+              ' ' +
+              produto.cor
+            ).includes(termo)
+          )
+        : [...produtos]
+    ).sort(compararProdutos);
 
-      const favoritos =
-        produtosFiltrados.filter(
-          produto => produto.favorito
-        );
+  const quantidadeFavoritos =
+    renderizarFavoritos(termo);
 
-      renderizarLista(
-        listaFavoritos,
-        favoritos
-      );
+  renderizarLista(
+    listaProdutos,
+    produtosFiltrados
+  );
 
-      renderizarLista(
-        listaProdutos,
-        produtosFiltrados
-      );
+  atualizarContador(
+    contadorFavoritos,
+    quantidadeFavoritos,
+    'modelo',
+    'modelos'
+  );
 
-      atualizarContador(
-        contadorFavoritos,
-        favoritos.length,
-        'modelo',
-        'modelos'
-      );
+  atualizarContador(
+    contadorProdutos,
+    produtosFiltrados.length,
+    'produto',
+    'produtos'
+  );
 
-      atualizarContador(
-        contadorProdutos,
-        produtosFiltrados.length,
-        'produto',
-        'produtos'
-      );
+  favoritosVazios.hidden =
+    quantidadeFavoritos > 0;
 
-      favoritosVazios.hidden =
-        favoritos.length > 0;
+  produtosVazios.hidden =
+    produtosFiltrados.length > 0;
 
-      produtosVazios.hidden =
-        produtosFiltrados.length > 0;
-
-      mostrarStatus(
-        statusLista,
-        termo
-          ? `${produtosFiltrados.length} produto(s) encontrado(s).`
-          : `${produtos.length} produto(s) carregado(s).`
-      );
-    }
+  mostrarStatus(
+    statusLista,
+    termo
+      ? `${produtosFiltrados.length} produto(s) encontrado(s).`
+      : `${produtos.length} produto(s) carregado(s).`
+  );
+}
 
     function obterResponsavelMemorizado() {
       try {
