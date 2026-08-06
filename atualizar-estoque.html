@@ -637,7 +637,7 @@
             id="contadorFavoritos"
             class="contador"
           >
-            0 modelos
+            0 produtos
           </span>
         </div>
 
@@ -990,14 +990,26 @@
       });
     }
 
-    const modelosFavoritosEmAlteracao =
+    const idsProdutosFavoritosEmAlteracao =
   new Set();
 
 async function alterarFavoritoProduto(
   produto
 ) {
+  const idProduto =
+    String(
+      produto.idProduto || ''
+    ).trim();
+
   const modelo =
-    String(produto.modelo || '').trim();
+    String(
+      produto.modelo || ''
+    ).trim();
+
+  const cor =
+    String(
+      produto.cor || ''
+    ).trim();
 
   const idUsuario =
     String(
@@ -1016,7 +1028,9 @@ async function alterarFavoritoProduto(
   }
 
   if (
-    modelosFavoritosEmAlteracao.has(modelo)
+    idsProdutosFavoritosEmAlteracao.has(
+      idProduto
+    )
   ) {
     return;
   }
@@ -1024,78 +1038,82 @@ async function alterarFavoritoProduto(
   const novoFavorito =
     produto.favorito !== true;
 
-  modelosFavoritosEmAlteracao.add(modelo);
+  idsProdutosFavoritosEmAlteracao.add(
+    idProduto
+  );
+
   renderizarProdutos();
 
   mostrarStatus(
     statusLista,
     novoFavorito
-      ? `Adicionando ${modelo} aos Favoritos...`
-      : `Removendo ${modelo} dos Favoritos...`
+      ? `Adicionando ${modelo} — ${cor} aos Favoritos...`
+      : `Removendo ${modelo} — ${cor} dos Favoritos...`
   );
 
   let mensagemFinal = '';
-let erroFinal = false;
+  let erroFinal = false;
 
-try {
-  const dados =
-    await consultarApiJsonp(
-      'alterarFavoritoAtualizarEstoque',
-      {
-        modelo,
-        favorito:
-          String(novoFavorito),
-        idUsuario
-      }
+  try {
+    const dados =
+      await consultarApiJsonp(
+        'alterarFavoritoAtualizarEstoque',
+        {
+          idProduto,
+          favorito:
+            String(novoFavorito),
+          idUsuario
+        }
+      );
+
+    if (
+      !dados ||
+      !Array.isArray(
+        dados.idsProdutosFavoritos
+      )
+    ) {
+      throw new Error(
+        'O backend não devolveu a lista atualizada de Favoritos.'
+      );
+    }
+
+    const idsProdutosFavoritos =
+      new Set(
+        dados.idsProdutosFavoritos
+      );
+
+    produtos.forEach(item => {
+      item.favorito =
+        idsProdutosFavoritos.has(
+          item.idProduto
+        );
+    });
+
+    mensagemFinal =
+      dados.favorito
+        ? `${modelo} — ${cor} adicionado aos Favoritos.`
+        : `${modelo} — ${cor} removido dos Favoritos.`;
+  } catch (erro) {
+    erroFinal = true;
+
+    mensagemFinal =
+      erro.message ||
+      'Não foi possível alterar o Favorito.';
+  } finally {
+    idsProdutosFavoritosEmAlteracao.delete(
+      idProduto
     );
 
-  if (
-    !dados ||
-    !Array.isArray(
-      dados.modelosFavoritos
-    )
-  ) {
-    throw new Error(
-      'O backend não devolveu a lista atualizada de Favoritos.'
+    renderizarProdutos();
+
+    mostrarStatus(
+      statusLista,
+      mensagemFinal,
+      erroFinal
     );
   }
-
-  const modelosFavoritos =
-    new Set(
-      dados.modelosFavoritos
-    );
-
-  produtos.forEach(item => {
-    item.favorito =
-      modelosFavoritos.has(
-        item.modelo
-      );
-  });
-
-  mensagemFinal =
-    dados.favorito
-      ? `${modelo} adicionado aos Favoritos.`
-      : `${modelo} removido dos Favoritos.`;
-} catch (erro) {
-  erroFinal = true;
-
-  mensagemFinal =
-    erro.message ||
-    'Não foi possível alterar o Favorito.';
-} finally {
-  modelosFavoritosEmAlteracao.delete(
-    modelo
-  );
-
-  renderizarProdutos();
-
-  mostrarStatus(
-    statusLista,
-    mensagemFinal,
-    erroFinal
-  );
 }
-}   
+  
     function criarLinhaProduto(produto) {
   const envoltorio =
     document.createElement('div');
@@ -1171,11 +1189,11 @@ try {
       : '☆';
 
   botaoFavorito.setAttribute(
-    'aria-label',
-    produto.favorito === true
-      ? `Remover ${produto.modelo} dos Favoritos`
-      : `Adicionar ${produto.modelo} aos Favoritos`
-  );
+  'aria-label',
+  produto.favorito === true
+    ? `Remover ${produto.modelo}, cor ${produto.cor}, dos Favoritos`
+    : `Adicionar ${produto.modelo}, cor ${produto.cor}, aos Favoritos`
+);
 
   botaoFavorito.title =
     produto.favorito === true
@@ -1183,9 +1201,9 @@ try {
       : 'Adicionar aos Favoritos';
 
   botaoFavorito.disabled =
-    modelosFavoritosEmAlteracao.has(
-      produto.modelo
-    );
+  idsProdutosFavoritosEmAlteracao.has(
+    produto.idProduto
+  );
 
   textos.append(modelo, cor);
   final.append(tipoEntrada, seta);
@@ -1210,201 +1228,37 @@ try {
   return envoltorio;
 }
 
-    function criarLinhaFavorito(
-  produtosDoModelo
-) {
-  const produtoRepresentante =
-    produtosDoModelo[0];
-
-  const quantidadeCores =
-    produtosDoModelo.length;
-
-  const envoltorio =
-    document.createElement('div');
-
-  envoltorio.className =
-    'produto-com-favorito';
-
-  const linha =
-    document.createElement('button');
-
-  linha.type = 'button';
-  linha.className = 'produto';
-
-  linha.setAttribute(
-    'aria-label',
-    `Mostrar as cores de ${produtoRepresentante.modelo}`
-  );
-
-  const textos =
-    document.createElement('div');
-
-  textos.className = 'produto-textos';
-
-  const modelo =
-    document.createElement('div');
-
-  modelo.className = 'modelo';
-  modelo.textContent =
-    produtoRepresentante.modelo;
-
-  const orientacao =
-    document.createElement('div');
-
-  orientacao.className = 'cor';
-  orientacao.textContent =
-    'Toque para escolher a cor';
-
-  const final =
-    document.createElement('div');
-
-  final.className = 'produto-final';
-
-  const quantidade =
-    document.createElement('span');
-
-  quantidade.className = 'tipo-entrada';
-  quantidade.textContent =
-    quantidadeCores === 1
-      ? '1 cor'
-      : `${quantidadeCores} cores`;
-
-  const seta =
-    document.createElement('span');
-
-  seta.className = 'seta';
-  seta.setAttribute(
-    'aria-hidden',
-    'true'
-  );
-  seta.textContent = '›';
-
-  const botaoFavorito =
-    document.createElement('button');
-
-  botaoFavorito.type = 'button';
-  botaoFavorito.className =
-    'botao-favorito ativo';
-  botaoFavorito.textContent = '★';
-
-  botaoFavorito.setAttribute(
-    'aria-label',
-    `Remover ${produtoRepresentante.modelo} dos Favoritos`
-  );
-
-  botaoFavorito.title =
-    'Remover dos Favoritos';
-
-  botaoFavorito.disabled =
-    modelosFavoritosEmAlteracao.has(
-      produtoRepresentante.modelo
-    );
-
-  textos.append(
-    modelo,
-    orientacao
-  );
-
-  final.append(
-    quantidade,
-    seta
-  );
-
-  linha.append(
-    textos,
-    final
-  );
-
-  linha.addEventListener('click', () => {
-    campoPesquisa.value =
-      produtoRepresentante.modelo;
-
-    renderizarProdutos();
-
-    listaProdutos.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
-  });
-
-  botaoFavorito.addEventListener(
-    'click',
-    () => {
-      alterarFavoritoProduto(
-        produtoRepresentante
-      );
-    }
-  );
-
-  envoltorio.append(
-    linha,
-    botaoFavorito
-  );
-
-  return envoltorio;
+    function criarLinhaFavorito(produto) {
+  return criarLinhaProduto(produto);
 }
 
+
 function renderizarFavoritos(termo) {
-  const favoritosPorModelo =
-    new Map();
-
-  produtos
-    .filter(
-      produto =>
-        produto.favorito === true
-    )
-    .forEach(produto => {
-      if (
-        !favoritosPorModelo.has(
-          produto.modelo
-        )
-      ) {
-        favoritosPorModelo.set(
-          produto.modelo,
-          []
-        );
-      }
-
-      favoritosPorModelo
-        .get(produto.modelo)
-        .push(produto);
-    });
-
-  const grupos =
-    Array.from(
-      favoritosPorModelo.values()
-    )
+  const favoritos =
+    produtos
       .filter(
-        produtosDoModelo =>
-          !termo ||
-          produtosDoModelo.some(
-            produto =>
-              normalizarBusca(
-                produto.modelo +
-                ' ' +
-                produto.cor
-              ).includes(termo)
-          )
+        produto =>
+          produto.favorito === true
       )
-      .sort(
-        (grupoA, grupoB) =>
-          grupoA[0].modelo.localeCompare(
-            grupoB[0].modelo,
-            'pt-BR',
-            { sensitivity: 'base' }
-          )
-      );
+      .filter(
+        produto =>
+          !termo ||
+          normalizarBusca(
+            produto.modelo +
+            ' ' +
+            produto.cor
+          ).includes(termo)
+      )
+      .sort(compararProdutos);
 
   listaFavoritos.replaceChildren();
 
   const fragmento =
     document.createDocumentFragment();
 
-  grupos.forEach(produtosDoModelo => {
+  favoritos.forEach(produto => {
     fragmento.appendChild(
-      criarLinhaFavorito(
-        produtosDoModelo
-      )
+      criarLinhaFavorito(produto)
     );
   });
 
@@ -1412,8 +1266,9 @@ function renderizarFavoritos(termo) {
     fragmento
   );
 
-  return grupos.length;
+  return favoritos.length;
 }
+
     
     function renderizarLista(
       elemento,
@@ -1475,8 +1330,8 @@ function renderizarFavoritos(termo) {
   atualizarContador(
     contadorFavoritos,
     quantidadeFavoritos,
-    'modelo',
-    'modelos'
+    'produto',
+    'produtos'
   );
 
   atualizarContador(
