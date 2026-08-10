@@ -991,129 +991,129 @@
     }
 
     const idsProdutosFavoritosEmAlteracao =
-  new Set();
+      new Set();
 
-async function alterarFavoritoProduto(
-  produto
-) {
-  const idProduto =
-    String(
-      produto.idProduto || ''
-    ).trim();
-
-  const modelo =
-    String(
-      produto.modelo || ''
-    ).trim();
-
-  const cor =
-    String(
-      produto.cor || ''
-    ).trim();
-
-  const idUsuario =
-    String(
-      campoResponsavel.value || ''
-    ).trim();
-
-  if (!idUsuario) {
-    mostrarStatus(
-      statusLista,
-      'Selecione o responsável antes de alterar os Favoritos.',
-      true
-    );
-
-    campoResponsavel.focus();
-    return;
-  }
-
-  if (
-    idsProdutosFavoritosEmAlteracao.has(
-      idProduto
-    )
-  ) {
-    return;
-  }
-
-  const novoFavorito =
-    produto.favorito !== true;
-
-  idsProdutosFavoritosEmAlteracao.add(
-    idProduto
-  );
-
-  renderizarProdutos();
-
-  mostrarStatus(
-    statusLista,
-    novoFavorito
-      ? `Adicionando ${modelo} — ${cor} aos Favoritos...`
-      : `Removendo ${modelo} — ${cor} dos Favoritos...`
-  );
-
-  let mensagemFinal = '';
-  let erroFinal = false;
-
-  try {
-    const dados =
-      await consultarApiJsonp(
-        'alterarFavoritoAtualizarEstoque',
-        {
-          idProduto,
-          favorito:
-            String(novoFavorito),
-          idUsuario
-        }
-      );
-
-    if (
-      !dados ||
-      !Array.isArray(
-        dados.idsProdutosFavoritos
-      )
+    async function alterarFavoritoProduto(
+      produto
     ) {
-      throw new Error(
-        'O backend não devolveu a lista atualizada de Favoritos.'
+      const idProduto =
+        String(
+          produto.idProduto || ''
+        ).trim();
+
+      const modelo =
+        String(
+          produto.modelo || ''
+        ).trim();
+
+      const cor =
+        String(
+          produto.cor || ''
+        ).trim();
+
+      const idUsuario =
+        String(
+          campoResponsavel.value || ''
+        ).trim();
+
+      if (!idUsuario) {
+        mostrarStatus(
+          statusLista,
+          'Selecione o responsável antes de alterar os Favoritos.',
+          true
+        );
+
+        campoResponsavel.focus();
+        return;
+      }
+
+      if (
+        idsProdutosFavoritosEmAlteracao.has(
+          idProduto
+        )
+      ) {
+        return;
+      }
+
+      const novoFavorito =
+        produto.favorito !== true;
+
+      idsProdutosFavoritosEmAlteracao.add(
+        idProduto
       );
+
+      renderizarProdutos();
+
+      mostrarStatus(
+        statusLista,
+        novoFavorito
+          ? `Adicionando ${modelo} — ${cor} aos Favoritos...`
+          : `Removendo ${modelo} — ${cor} dos Favoritos...`
+      );
+
+      let mensagemFinal = '';
+      let erroFinal = false;
+
+      try {
+        const dados =
+          await consultarApiJsonp(
+            'alterarFavoritoAtualizarEstoque',
+            {
+              idProduto,
+              favorito:
+                String(novoFavorito),
+              idUsuario
+            }
+          );
+
+        if (
+          !dados ||
+          !Array.isArray(
+            dados.idsProdutosFavoritos
+          )
+        ) {
+          throw new Error(
+            'O backend não devolveu a lista atualizada de Favoritos.'
+          );
+        }
+
+        const idsProdutosFavoritos =
+          new Set(
+            dados.idsProdutosFavoritos
+          );
+
+        produtos.forEach(item => {
+          item.favorito =
+            idsProdutosFavoritos.has(
+              item.idProduto
+            );
+        });
+
+        mensagemFinal =
+          dados.favorito
+            ? `${modelo} — ${cor} adicionado aos Favoritos.`
+            : `${modelo} — ${cor} removido dos Favoritos.`;
+      } catch (erro) {
+        erroFinal = true;
+
+        mensagemFinal =
+          erro.message ||
+          'Não foi possível alterar o Favorito.';
+      } finally {
+        idsProdutosFavoritosEmAlteracao.delete(
+          idProduto
+        );
+
+        renderizarProdutos();
+
+        mostrarStatus(
+          statusLista,
+          mensagemFinal,
+          erroFinal
+        );
+      }
     }
 
-    const idsProdutosFavoritos =
-      new Set(
-        dados.idsProdutosFavoritos
-      );
-
-    produtos.forEach(item => {
-      item.favorito =
-        idsProdutosFavoritos.has(
-          item.idProduto
-        );
-    });
-
-    mensagemFinal =
-      dados.favorito
-        ? `${modelo} — ${cor} adicionado aos Favoritos.`
-        : `${modelo} — ${cor} removido dos Favoritos.`;
-  } catch (erro) {
-    erroFinal = true;
-
-    mensagemFinal =
-      erro.message ||
-      'Não foi possível alterar o Favorito.';
-  } finally {
-    idsProdutosFavoritosEmAlteracao.delete(
-      idProduto
-    );
-
-    renderizarProdutos();
-
-    mostrarStatus(
-      statusLista,
-      mensagemFinal,
-      erroFinal
-    );
-  }
-}
-  
     function criarLinhaProduto(produto) {
   const envoltorio =
     document.createElement('div');
@@ -1189,11 +1189,11 @@ async function alterarFavoritoProduto(
       : '☆';
 
   botaoFavorito.setAttribute(
-  'aria-label',
-  produto.favorito === true
-    ? `Remover ${produto.modelo}, cor ${produto.cor}, dos Favoritos`
-    : `Adicionar ${produto.modelo}, cor ${produto.cor}, aos Favoritos`
-);
+    'aria-label',
+    produto.favorito === true
+      ? `Remover ${produto.modelo}, cor ${produto.cor}, dos Favoritos`
+      : `Adicionar ${produto.modelo}, cor ${produto.cor}, aos Favoritos`
+  );
 
   botaoFavorito.title =
     produto.favorito === true
@@ -1201,9 +1201,9 @@ async function alterarFavoritoProduto(
       : 'Adicionar aos Favoritos';
 
   botaoFavorito.disabled =
-  idsProdutosFavoritosEmAlteracao.has(
-    produto.idProduto
-  );
+    idsProdutosFavoritosEmAlteracao.has(
+      produto.idProduto
+    );
 
   textos.append(modelo, cor);
   final.append(tipoEntrada, seta);
@@ -1229,46 +1229,44 @@ async function alterarFavoritoProduto(
 }
 
     function criarLinhaFavorito(produto) {
-  return criarLinhaProduto(produto);
-}
+      return criarLinhaProduto(produto);
+    }
 
+    function renderizarFavoritos(termo) {
+      const favoritos =
+        produtos
+          .filter(
+            produto =>
+              produto.favorito === true
+          )
+          .filter(
+            produto =>
+              !termo ||
+              normalizarBusca(
+                produto.modelo +
+                ' ' +
+                produto.cor
+              ).includes(termo)
+          )
+          .sort(compararProdutos);
 
-function renderizarFavoritos(termo) {
-  const favoritos =
-    produtos
-      .filter(
-        produto =>
-          produto.favorito === true
-      )
-      .filter(
-        produto =>
-          !termo ||
-          normalizarBusca(
-            produto.modelo +
-            ' ' +
-            produto.cor
-          ).includes(termo)
-      )
-      .sort(compararProdutos);
+      listaFavoritos.replaceChildren();
 
-  listaFavoritos.replaceChildren();
+      const fragmento =
+        document.createDocumentFragment();
 
-  const fragmento =
-    document.createDocumentFragment();
+      favoritos.forEach(produto => {
+        fragmento.appendChild(
+          criarLinhaFavorito(produto)
+        );
+      });
 
-  favoritos.forEach(produto => {
-    fragmento.appendChild(
-      criarLinhaFavorito(produto)
-    );
-  });
+      listaFavoritos.appendChild(
+        fragmento
+      );
 
-  listaFavoritos.appendChild(
-    fragmento
-  );
-
-  return favoritos.length;
-}
-
+      return favoritos.length;
+    }
     
     function renderizarLista(
       elemento,
