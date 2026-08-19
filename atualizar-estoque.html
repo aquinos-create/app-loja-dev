@@ -343,6 +343,96 @@
       border-radius: 8px;
     }
 
+         .manutencao-tamanhos {
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+
+    .manutencao-tamanhos summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      font-weight: 700;
+      background: #f9fafb;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .manutencao-tamanhos summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .indicador-manutencao {
+      flex: 0 0 auto;
+      font-size: 20px;
+      line-height: 1;
+      color: #6b7280;
+      transition: transform 0.2s ease;
+    }
+
+    .manutencao-tamanhos[open] .indicador-manutencao {
+      transform: rotate(180deg);
+    }
+
+    .manutencao-tamanhos[open] summary {
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .conteudo-manutencao-tamanhos {
+      padding: 14px;
+    }
+
+    .acao-manutencao-tamanho + .acao-manutencao-tamanho {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .acao-manutencao-tamanho h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .campos-manutencao-tamanho {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .campos-manutencao-tamanho label {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .campos-manutencao-tamanho input {
+      margin-top: 8px;
+    }
+
+    .acao-manutencao-tamanho button {
+      width: 100%;
+      padding: 12px;
+      font-weight: 700;
+      background: #166534;
+      color: #ffffff;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .acao-manutencao-tamanho button:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+
+    .botao-desativar-tamanho {
+      margin-top: 12px;
+      background: #991b1b !important;
+    }
+    
     .grades-recolhiveis {
       overflow: hidden;
       border: 1px solid #e5e7eb;
@@ -727,6 +817,87 @@
           </p>
         </section>
 
+                 <details
+          id="secaoManutencaoTamanhos"
+          class="secao-detalhes manutencao-tamanhos"
+          hidden
+        >
+          <summary>
+            <span>Gerenciar tamanhos</span>
+
+            <span
+              class="indicador-manutencao"
+              aria-hidden="true"
+            >
+              ⌄
+            </span>
+          </summary>
+
+          <div class="conteudo-manutencao-tamanhos">
+            <section class="acao-manutencao-tamanho">
+              <h3>Adicionar ou reativar</h3>
+
+              <div class="campos-manutencao-tamanho">
+                <label for="tamanhoAdicionar">
+                  Tamanho
+
+                  <input
+                    id="tamanhoAdicionar"
+                    type="number"
+                    min="18"
+                    max="48"
+                    step="1"
+                    inputmode="numeric"
+                    placeholder="Ex.: 44"
+                  >
+                </label>
+
+                <label for="quantidadeInicialTamanho">
+                  Quantidade inicial
+
+                  <input
+                    id="quantidadeInicialTamanho"
+                    type="number"
+                    min="0"
+                    step="1"
+                    inputmode="numeric"
+                    value="0"
+                  >
+                </label>
+              </div>
+
+              <button
+                id="botaoAdicionarOuReativarTamanho"
+                type="button"
+              >
+                Adicionar ou reativar
+              </button>
+            </section>
+
+            <section class="acao-manutencao-tamanho">
+              <h3>Desativar tamanho</h3>
+
+              <label for="tamanhoDesativar">
+                Tamanho ativo
+              </label>
+
+              <select id="tamanhoDesativar">
+                <option value="">
+                  Selecione o tamanho
+                </option>
+              </select>
+
+              <button
+                id="botaoDesativarTamanho"
+                class="botao-desativar-tamanho"
+                type="button"
+              >
+                Desativar tamanho
+              </button>
+            </section>
+          </div>
+        </details>
+        
         <details
           id="secaoGrades"
           class="secao-detalhes grades-recolhiveis"
@@ -846,6 +1017,36 @@
     const mensagemVariados =
       document.getElementById('mensagemVariados');
 
+        const secaoManutencaoTamanhos =
+      document.getElementById(
+        'secaoManutencaoTamanhos'
+      );
+
+    const campoTamanhoAdicionar =
+      document.getElementById(
+        'tamanhoAdicionar'
+      );
+
+    const campoQuantidadeInicialTamanho =
+      document.getElementById(
+        'quantidadeInicialTamanho'
+      );
+
+    const botaoAdicionarOuReativarTamanho =
+      document.getElementById(
+        'botaoAdicionarOuReativarTamanho'
+      );
+
+    const campoTamanhoDesativar =
+      document.getElementById(
+        'tamanhoDesativar'
+      );
+
+    const botaoDesativarTamanho =
+      document.getElementById(
+        'botaoDesativarTamanho'
+      );
+
     const secaoGrades =
       document.getElementById('secaoGrades');
 
@@ -865,6 +1066,20 @@
       document.getElementById('listaAlertas');
         let filaSalvamentos =
       Promise.resolve();
+
+        let detalhesProdutoAtual = null;
+
+    let tentativaAdicionarTamanho = {
+      assinatura: '',
+      chaveIdempotente: ''
+    };
+
+    let tentativaDesativarTamanho = {
+      assinatura: '',
+      chaveIdempotente: ''
+    };
+
+    let manutencaoTamanhoPendente = false;
 
     let produtos = [];
     let sequenciaCallback = 0;
