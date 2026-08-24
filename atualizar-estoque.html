@@ -2429,6 +2429,157 @@
       listaTamanhos.appendChild(fragmento);
     }
 
+    function preencherTamanhosParaDesativacao(
+      tamanhos
+    ) {
+      const valorAnterior =
+        campoTamanhoDesativar.value;
+
+      campoTamanhoDesativar.replaceChildren();
+
+      const opcaoInicial =
+        document.createElement('option');
+
+      opcaoInicial.value = '';
+      opcaoInicial.textContent =
+        'Selecione o tamanho';
+
+      campoTamanhoDesativar.appendChild(
+        opcaoInicial
+      );
+
+      const tamanhosAtivos =
+        tamanhos
+          .filter(
+            item =>
+              item.statusTamanho === 'Ativo'
+          )
+          .sort(
+            (itemA, itemB) =>
+              Number(itemA.tamanho) -
+              Number(itemB.tamanho)
+          );
+
+      tamanhosAtivos.forEach(item => {
+        const opcao =
+          document.createElement('option');
+
+        opcao.value = String(item.tamanho);
+        opcao.textContent =
+          `Tamanho ${item.tamanho} — total ${item.quantidadeTotal}`;
+
+        campoTamanhoDesativar.appendChild(
+          opcao
+        );
+      });
+
+      const valorAindaExiste =
+        tamanhosAtivos.some(
+          item =>
+            String(item.tamanho) ===
+            valorAnterior
+        );
+
+      campoTamanhoDesativar.value =
+        valorAindaExiste
+          ? valorAnterior
+          : '';
+    }
+
+    function atualizarEstadoControlesManutencao() {
+      const produto =
+        detalhesProdutoAtual &&
+        detalhesProdutoAtual.produto;
+
+      const produtoVariados =
+        produto &&
+        produto.formaEntradaEstoque ===
+          'Variados';
+
+      const idUsuario =
+        String(
+          campoResponsavel.value || ''
+        ).trim();
+
+      const textoTamanhoAdicionar =
+        campoTamanhoAdicionar.value.trim();
+
+      const textoQuantidadeInicial =
+        campoQuantidadeInicialTamanho
+          .value
+          .trim();
+
+      const tamanhoAdicionar =
+        Number(textoTamanhoAdicionar);
+
+      const quantidadeInicial =
+        Number(textoQuantidadeInicial);
+
+      const inclusaoValida =
+        produtoVariados &&
+        idUsuario &&
+        textoTamanhoAdicionar !== '' &&
+        Number.isInteger(tamanhoAdicionar) &&
+        tamanhoAdicionar >= 18 &&
+        tamanhoAdicionar <= 48 &&
+        textoQuantidadeInicial !== '' &&
+        Number.isInteger(quantidadeInicial) &&
+        quantidadeInicial >= 0;
+
+      const tamanhoDesativar =
+        Number(
+          campoTamanhoDesativar.value
+        );
+
+      const desativacaoValida =
+        produtoVariados &&
+        idUsuario &&
+        Number.isInteger(tamanhoDesativar) &&
+        tamanhoDesativar >= 18 &&
+        tamanhoDesativar <= 48;
+
+      campoTamanhoAdicionar.disabled =
+        manutencaoTamanhoPendente;
+
+      campoQuantidadeInicialTamanho.disabled =
+        manutencaoTamanhoPendente;
+
+      campoTamanhoDesativar.disabled =
+        manutencaoTamanhoPendente;
+
+      botaoAdicionarOuReativarTamanho.disabled =
+        manutencaoTamanhoPendente ||
+        !inclusaoValida;
+
+      botaoDesativarTamanho.disabled =
+        manutencaoTamanhoPendente ||
+        !desativacaoValida;
+    }
+
+    function renderizarManutencaoTamanhos(
+      produto,
+      tamanhos
+    ) {
+      const produtoVariados =
+        produto.formaEntradaEstoque ===
+          'Variados';
+
+      secaoManutencaoTamanhos.hidden =
+        !produtoVariados;
+
+      if (!produtoVariados) {
+        secaoManutencaoTamanhos.open = false;
+        return;
+      }
+
+      preencherTamanhosParaDesativacao(
+        tamanhos
+      );
+
+      atualizarEstadoControlesManutencao();
+    }
+
+    
     function renderizarAlertas(alertas) {
       listaAlertas.replaceChildren();
 
