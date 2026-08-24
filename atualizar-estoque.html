@@ -2656,6 +2656,299 @@
       conteudoDetalhes.hidden = false;
     }
 
+        async function recarregarDetalhesProdutoAtual(
+      idProduto
+    ) {
+      const produtoAtual =
+        detalhesProdutoAtual &&
+        detalhesProdutoAtual.produto;
+
+      if (
+        !produtoAtual ||
+        produtoAtual.idProduto !== idProduto
+      ) {
+        return false;
+      }
+
+      sequenciaDetalhes++;
+
+      const requisicaoAtual =
+        sequenciaDetalhes;
+
+      const dados =
+        await consultarApiJsonp(
+          'buscarProdutoAtualizarEstoque',
+          { idProduto }
+        );
+
+      const produtoAindaAberto =
+        detalhesProdutoAtual &&
+        detalhesProdutoAtual.produto &&
+        detalhesProdutoAtual
+          .produto
+          .idProduto === idProduto;
+
+      if (
+        requisicaoAtual !==
+          sequenciaDetalhes ||
+        !produtoAindaAberto
+      ) {
+        return false;
+      }
+
+      if (!dados || !dados.produto) {
+        throw new Error(
+          'O backend não retornou os detalhes atualizados do produto.'
+        );
+      }
+
+      renderizarDetalhes(dados);
+      memorizarProdutoAberto(idProduto);
+
+      return true;
+    }
+
+         async function recarregarDetalhesProdutoAtual(
+      idProduto
+    ) {
+      const produtoAtual =
+        detalhesProdutoAtual &&
+        detalhesProdutoAtual.produto;
+
+      if (
+        !produtoAtual ||
+        produtoAtual.idProduto !== idProduto
+      ) {
+        return false;
+      }
+
+      sequenciaDetalhes++;
+
+      const requisicaoAtual =
+        sequenciaDetalhes;
+
+      const dados =
+        await consultarApiJsonp(
+          'buscarProdutoAtualizarEstoque',
+          { idProduto }
+        );
+
+      const produtoAindaAberto =
+        detalhesProdutoAtual &&
+        detalhesProdutoAtual.produto &&
+        detalhesProdutoAtual
+          .produto
+          .idProduto === idProduto;
+
+      if (
+        requisicaoAtual !==
+          sequenciaDetalhes ||
+        !produtoAindaAberto
+      ) {
+        return false;
+      }
+
+      if (!dados || !dados.produto) {
+        throw new Error(
+          'O backend não retornou os detalhes atualizados do produto.'
+        );
+      }
+
+      renderizarDetalhes(dados);
+      memorizarProdutoAberto(idProduto);
+
+      return true;
+    }
+
+        async function adicionarOuReativarTamanhoPelaInterface() {
+      if (manutencaoTamanhoPendente) {
+        return;
+      }
+
+      const produto =
+        detalhesProdutoAtual &&
+        detalhesProdutoAtual.produto;
+
+      const idUsuario =
+        String(
+          campoResponsavel.value || ''
+        ).trim();
+
+      const textoTamanho =
+        campoTamanhoAdicionar.value.trim();
+
+      const textoQuantidade =
+        campoQuantidadeInicialTamanho
+          .value
+          .trim();
+
+      const tamanho =
+        Number(textoTamanho);
+
+      const quantidadeInicial =
+        Number(textoQuantidade);
+
+      const entradaValida =
+        produto &&
+        produto.formaEntradaEstoque ===
+          'Variados' &&
+        idUsuario &&
+        textoTamanho !== '' &&
+        Number.isInteger(tamanho) &&
+        tamanho >= 18 &&
+        tamanho <= 48 &&
+        textoQuantidade !== '' &&
+        Number.isInteger(
+          quantidadeInicial
+        ) &&
+        quantidadeInicial >= 0;
+
+      if (!entradaValida) {
+        statusDetalhes.hidden = false;
+
+        mostrarStatus(
+          statusDetalhes,
+          'Informe um tamanho entre 18 e 48 e uma quantidade inicial inteira igual ou superior a 0.',
+          true
+        );
+
+        atualizarEstadoControlesManutencao();
+        return;
+      }
+
+      const assinatura =
+        [
+          produto.idProduto,
+          tamanho,
+          quantidadeInicial,
+          idUsuario
+        ].join('|');
+
+      if (
+        tentativaAdicionarTamanho
+          .assinatura !== assinatura ||
+        !tentativaAdicionarTamanho
+          .chaveIdempotente
+      ) {
+        tentativaAdicionarTamanho = {
+          assinatura,
+          chaveIdempotente:
+            criarChaveIdempotenteAtualizarEstoque()
+        };
+      }
+
+      const chaveIdempotente =
+        tentativaAdicionarTamanho
+          .chaveIdempotente;
+
+      manutencaoTamanhoPendente = true;
+      atualizarEstadoControlesManutencao();
+
+      statusDetalhes.hidden = false;
+
+      mostrarStatus(
+        statusDetalhes,
+        `Processando o tamanho ${tamanho}...`
+      );
+
+      let operacaoConfirmada = false;
+
+      try {
+        const dados =
+          await consultarApiJsonp(
+            'adicionarOuReativarTamanhoVariadoAtualizarEstoque',
+            {
+              idProduto:
+                produto.idProduto,
+              tamanho:
+                String(tamanho),
+              quantidadeInicial:
+                String(quantidadeInicial),
+              idUsuario,
+              chaveIdempotente
+            }
+          );
+
+        if (
+          dados.estado ===
+          'CONFLITO_IDEMPOTENCIA'
+        ) {
+          tentativaAdicionarTamanho = {
+            assinatura: '',
+            chaveIdempotente: ''
+          };
+
+          throw new Error(
+            'A tentativa entrou em conflito com outra operação. Tente novamente.'
+          );
+        }
+
+        const mensagensPorEstado = {
+          CRIADO:
+            `Tamanho ${tamanho} adicionado.`,
+          REATIVADO:
+            `Tamanho ${tamanho} reativado.`,
+          JA_ATIVO:
+            `O tamanho ${tamanho} já estava ativo.`,
+          REPETICAO_IDEMPOTENTE:
+            `A operação do tamanho ${tamanho} já havia sido confirmada.`
+        };
+
+        const mensagemSucesso =
+          mensagensPorEstado[dados.estado];
+
+        if (!mensagemSucesso) {
+          throw new Error(
+            'O backend não confirmou a inclusão ou reativação do tamanho.'
+          );
+        }
+
+        operacaoConfirmada = true;
+
+        tentativaAdicionarTamanho = {
+          assinatura: '',
+          chaveIdempotente: ''
+        };
+
+        campoTamanhoAdicionar.value = '';
+
+        campoQuantidadeInicialTamanho.value =
+          '0';
+
+        const produtoAtualizado =
+          await recarregarDetalhesProdutoAtual(
+            produto.idProduto
+          );
+
+        if (produtoAtualizado) {
+          statusDetalhes.hidden = false;
+
+          mostrarStatus(
+            statusDetalhes,
+            mensagemSucesso
+          );
+        }
+
+      } catch (erro) {
+        statusDetalhes.hidden = false;
+
+        mostrarStatus(
+          statusDetalhes,
+          operacaoConfirmada
+            ? 'A operação foi confirmada, mas não foi possível atualizar a tela. Reabra o produto.'
+            : (
+                erro.message ||
+                'Não foi possível adicionar ou reativar o tamanho.'
+              ),
+          true
+        );
+
+      } finally {
+        manutencaoTamanhoPendente = false;
+        atualizarEstadoControlesManutencao();
+      }
+    }
+    
     async function abrirProduto(idProduto) {
       posicaoLista = window.scrollY;
       sequenciaDetalhes++;
