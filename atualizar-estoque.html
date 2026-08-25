@@ -3460,6 +3460,15 @@
       }
     );
 
+        campoQuantidadeInicialTamanho.addEventListener(
+      'focus',
+      () => {
+        window.setTimeout(() => {
+          campoQuantidadeInicialTamanho.select();
+        }, 0);
+      }
+    );
+    
     campoQuantidadeInicialTamanho.addEventListener(
       'input',
       () => {
