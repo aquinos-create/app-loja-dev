@@ -837,6 +837,12 @@
             <section class="acao-manutencao-tamanho">
               <h3>Adicionar ou reativar</h3>
 
+                          <p
+              id="statusManutencaoTamanhos"
+              class="status"
+              hidden
+            ></p>
+
               <div class="campos-manutencao-tamanho">
                 <label for="tamanhoAdicionar">
                   Tamanho
@@ -1022,6 +1028,11 @@
         'secaoManutencaoTamanhos'
       );
 
+        const statusManutencaoTamanhos =
+      document.getElementById(
+        'statusManutencaoTamanhos'
+      );
+
     const campoTamanhoAdicionar =
       document.getElementById(
         'tamanhoAdicionar'
@@ -1086,13 +1097,34 @@
     let sequenciaDetalhes = 0;
     let posicaoLista = 0;
 
-    function mostrarStatus(
+        function mostrarStatus(
       elemento,
       mensagem,
       erro = false
     ) {
       elemento.textContent = mensagem;
-      elemento.classList.toggle('erro', erro);
+
+      elemento.classList.toggle(
+        'erro',
+        erro
+      );
+
+      const deveEspelharNaManutencao =
+        elemento === statusDetalhes &&
+        !secaoManutencaoTamanhos.hidden;
+
+      if (deveEspelharNaManutencao) {
+        statusManutencaoTamanhos.textContent =
+          mensagem;
+
+        statusManutencaoTamanhos.classList.toggle(
+          'erro',
+          erro
+        );
+
+        statusManutencaoTamanhos.hidden =
+          mensagem === '';
+      }
     }
 
     function normalizarBusca(valor) {
