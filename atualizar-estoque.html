@@ -2948,6 +2948,217 @@
         atualizarEstadoControlesManutencao();
       }
     }
+
+        async function desativarTamanhoPelaInterface() {
+      if (manutencaoTamanhoPendente) {
+        return;
+      }
+
+      const produto =
+        detalhesProdutoAtual &&
+        detalhesProdutoAtual.produto;
+
+      const idUsuario =
+        String(
+          campoResponsavel.value || ''
+        ).trim();
+
+      const tamanho =
+        Number(
+          campoTamanhoDesativar.value
+        );
+
+      const entradaValida =
+        produto &&
+        produto.formaEntradaEstoque ===
+          'Variados' &&
+        idUsuario &&
+        Number.isInteger(tamanho) &&
+        tamanho >= 18 &&
+        tamanho <= 48;
+
+      if (!entradaValida) {
+        statusDetalhes.hidden = false;
+
+        mostrarStatus(
+          statusDetalhes,
+          'Selecione um tamanho ativo para desativar.',
+          true
+        );
+
+        atualizarEstadoControlesManutencao();
+        return;
+      }
+
+      const confirmou =
+        window.confirm(
+          `Desativar o tamanho ${tamanho}? ` +
+          'A operação só será aceita se o saldo e a reserva estiverem zerados.'
+        );
+
+      if (!confirmou) {
+        return;
+      }
+
+      const assinatura =
+        [
+          produto.idProduto,
+          tamanho,
+          idUsuario
+        ].join('|');
+
+      if (
+        tentativaDesativarTamanho
+          .assinatura !== assinatura ||
+        !tentativaDesativarTamanho
+          .chaveIdempotente
+      ) {
+        tentativaDesativarTamanho = {
+          assinatura,
+          chaveIdempotente:
+            criarChaveIdempotenteAtualizarEstoque()
+        };
+      }
+
+      const chaveIdempotente =
+        tentativaDesativarTamanho
+          .chaveIdempotente;
+
+      manutencaoTamanhoPendente = true;
+      atualizarEstadoControlesManutencao();
+
+      statusDetalhes.hidden = false;
+
+      mostrarStatus(
+        statusDetalhes,
+        `Desativando o tamanho ${tamanho}...`
+      );
+
+      let respostaConfirmada = false;
+      let mensagemFinal = '';
+      let erroFinal = false;
+
+      try {
+        const dados =
+          await consultarApiJsonp(
+            'desativarTamanhoVariadoAtualizarEstoque',
+            {
+              idProduto:
+                produto.idProduto,
+              tamanho:
+                String(tamanho),
+              idUsuario,
+              chaveIdempotente
+            }
+          );
+
+        if (
+          dados.estado ===
+          'CONFLITO_IDEMPOTENCIA'
+        ) {
+          tentativaDesativarTamanho = {
+            assinatura: '',
+            chaveIdempotente: ''
+          };
+
+          throw new Error(
+            'A tentativa entrou em conflito com outra operação. Tente novamente.'
+          );
+        }
+
+        const respostasPorEstado = {
+          DESATIVADO: {
+            mensagem:
+              `Tamanho ${tamanho} desativado.`,
+            erro: false
+          },
+          JA_INATIVO: {
+            mensagem:
+              `O tamanho ${tamanho} já estava inativo.`,
+            erro: false
+          },
+          REPETICAO_IDEMPOTENTE: {
+            mensagem:
+              `A desativação do tamanho ${tamanho} já havia sido confirmada.`,
+            erro: false
+          },
+          BLOQUEADO_RESERVA: {
+            mensagem:
+              `O tamanho ${tamanho} não foi desativado porque possui quantidade reservada.`,
+            erro: true
+          },
+          BLOQUEADO_SALDO: {
+            mensagem:
+              `O tamanho ${tamanho} não foi desativado porque o saldo ainda não está zerado.`,
+            erro: true
+          }
+        };
+
+        const resposta =
+          respostasPorEstado[dados.estado];
+
+        if (!resposta) {
+          throw new Error(
+            'O backend não confirmou o resultado da desativação.'
+          );
+        }
+
+        respostaConfirmada = true;
+        mensagemFinal = resposta.mensagem;
+        erroFinal = resposta.erro;
+
+        tentativaDesativarTamanho = {
+          assinatura: '',
+          chaveIdempotente: ''
+        };
+
+        if (
+          dados.estado === 'DESATIVADO' ||
+          dados.estado === 'JA_INATIVO' ||
+          dados.estado ===
+            'REPETICAO_IDEMPOTENTE'
+        ) {
+          campoTamanhoDesativar.value = '';
+        }
+
+        const produtoAtualizado =
+          await recarregarDetalhesProdutoAtual(
+            produto.idProduto
+          );
+
+        if (produtoAtualizado) {
+          statusDetalhes.hidden = false;
+
+          mostrarStatus(
+            statusDetalhes,
+            mensagemFinal,
+            erroFinal
+          );
+        }
+
+      } catch (erro) {
+        statusDetalhes.hidden = false;
+
+        mostrarStatus(
+          statusDetalhes,
+          respostaConfirmada
+            ? (
+                mensagemFinal +
+                ' Porém, não foi possível atualizar a tela. Reabra o produto.'
+              )
+            : (
+                erro.message ||
+                'Não foi possível desativar o tamanho.'
+              ),
+          true
+        );
+
+      } finally {
+        manutencaoTamanhoPendente = false;
+        atualizarEstadoControlesManutencao();
+      }
+    }
+    
     
     async function abrirProduto(idProduto) {
       posicaoLista = window.scrollY;
