@@ -2606,8 +2606,9 @@
       listaAlertas.appendChild(fragmento);
     }
 
-    function renderizarDetalhes(dados) {
+        function renderizarDetalhes(dados) {
       const produto = dados.produto;
+
       const tamanhos =
         Array.isArray(dados.tamanhos)
           ? dados.tamanhos
@@ -2623,16 +2624,61 @@
           ? dados.alertas
           : [];
 
-      modeloDetalhes.textContent = produto.modelo;
-      corDetalhes.textContent = produto.cor;
+      const idProdutoAnterior =
+        detalhesProdutoAtual &&
+        detalhesProdutoAtual.produto
+          ? detalhesProdutoAtual
+              .produto
+              .idProduto
+          : '';
+
+      const mudouProduto =
+        idProdutoAnterior !==
+        produto.idProduto;
+
+      if (mudouProduto) {
+        campoTamanhoAdicionar.value = '';
+
+        campoQuantidadeInicialTamanho.value =
+          '0';
+
+        campoTamanhoDesativar.value = '';
+
+        tentativaAdicionarTamanho = {
+          assinatura: '',
+          chaveIdempotente: ''
+        };
+
+        tentativaDesativarTamanho = {
+          assinatura: '',
+          chaveIdempotente: ''
+        };
+
+        secaoManutencaoTamanhos.open =
+          false;
+      }
+
+      detalhesProdutoAtual = dados;
+
+      modeloDetalhes.textContent =
+        produto.modelo;
+
+      corDetalhes.textContent =
+        produto.cor;
+
       tipoEntradaDetalhes.textContent =
         produto.formaEntradaEstoque;
 
       const produtoVariados =
-        produto.formaEntradaEstoque === 'Variados';
+        produto.formaEntradaEstoque ===
+          'Variados';
 
-      mensagemVariados.hidden = !produtoVariados;
-      secaoGrades.hidden = produtoVariados;
+      mensagemVariados.hidden =
+        !produtoVariados;
+
+      secaoGrades.hidden =
+        produtoVariados;
+
       secaoGrades.open = false;
 
       if (produtoVariados) {
@@ -2641,10 +2687,16 @@
         renderizarGrades(grades);
       }
 
-            renderizarTamanhos(
+      renderizarTamanhos(
         tamanhos,
         produto.idProduto
       );
+
+      renderizarManutencaoTamanhos(
+        produto,
+        tamanhos
+      );
+
       renderizarAlertas(alertas);
 
       mostrarStatus(
@@ -3279,17 +3331,76 @@
       }
     }
 
+        campoTamanhoAdicionar.addEventListener(
+      'input',
+      () => {
+        tentativaAdicionarTamanho = {
+          assinatura: '',
+          chaveIdempotente: ''
+        };
+
+        atualizarEstadoControlesManutencao();
+      }
+    );
+
+    campoQuantidadeInicialTamanho.addEventListener(
+      'input',
+      () => {
+        tentativaAdicionarTamanho = {
+          assinatura: '',
+          chaveIdempotente: ''
+        };
+
+        atualizarEstadoControlesManutencao();
+      }
+    );
+
+    campoTamanhoDesativar.addEventListener(
+      'change',
+      () => {
+        tentativaDesativarTamanho = {
+          assinatura: '',
+          chaveIdempotente: ''
+        };
+
+        atualizarEstadoControlesManutencao();
+      }
+    );
+
+    botaoAdicionarOuReativarTamanho.addEventListener(
+      'click',
+      adicionarOuReativarTamanhoPelaInterface
+    );
+
+    botaoDesativarTamanho.addEventListener(
+      'click',
+      desativarTamanhoPelaInterface
+    );
+
+    
     campoPesquisa.addEventListener(
       'input',
       renderizarProdutos
     );
 
-    campoResponsavel.addEventListener(
+        campoResponsavel.addEventListener(
       'change',
       () => {
         memorizarResponsavel(
           campoResponsavel.value
         );
+
+        tentativaAdicionarTamanho = {
+          assinatura: '',
+          chaveIdempotente: ''
+        };
+
+        tentativaDesativarTamanho = {
+          assinatura: '',
+          chaveIdempotente: ''
+        };
+
+        atualizarEstadoControlesManutencao();
       }
     );
 
