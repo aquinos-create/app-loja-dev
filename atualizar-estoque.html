@@ -171,6 +171,62 @@
       color: #b91c1c !important;
     }
 
+        #statusManutencaoTamanhos {
+      min-height: 0;
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      font-weight: 700;
+      line-height: 1.4;
+      border: 1px solid;
+      border-radius: 8px;
+    }
+
+    #statusManutencaoTamanhos::before {
+      display: inline-grid;
+      width: 22px;
+      height: 22px;
+      place-items: center;
+      margin-right: 8px;
+      font-weight: 700;
+      border-radius: 50%;
+    }
+
+    #statusManutencaoTamanhos.sucesso {
+      background: #f0fdf4;
+      color: #166534;
+      border-color: #86efac;
+    }
+
+    #statusManutencaoTamanhos.sucesso::before {
+      content: '✓';
+      background: #166534;
+      color: #ffffff;
+    }
+
+    #statusManutencaoTamanhos.processando {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #93c5fd;
+    }
+
+    #statusManutencaoTamanhos.processando::before {
+      content: '…';
+      background: #1d4ed8;
+      color: #ffffff;
+    }
+
+    #statusManutencaoTamanhos.erro {
+      background: #fef2f2;
+      color: #991b1b !important;
+      border-color: #fecaca;
+    }
+
+    #statusManutencaoTamanhos.erro::before {
+      content: '!';
+      background: #991b1b;
+      color: #ffffff;
+    }
+
     .secao-lista,
     .secao-detalhes {
       margin-top: 22px;
@@ -1097,7 +1153,7 @@
     let sequenciaDetalhes = 0;
     let posicaoLista = 0;
 
-        function mostrarStatus(
+            function mostrarStatus(
       elemento,
       mensagem,
       erro = false
@@ -1114,16 +1170,45 @@
         !secaoManutencaoTamanhos.hidden;
 
       if (deveEspelharNaManutencao) {
+        const textoMensagem =
+          String(mensagem || '');
+
+        const estaProcessando =
+          !erro &&
+          (
+            textoMensagem.startsWith(
+              'Processando'
+            ) ||
+            textoMensagem.startsWith(
+              'Desativando'
+            )
+          );
+
+        const foiConfirmado =
+          textoMensagem !== '' &&
+          !erro &&
+          !estaProcessando;
+
         statusManutencaoTamanhos.textContent =
-          mensagem;
+          textoMensagem;
 
         statusManutencaoTamanhos.classList.toggle(
           'erro',
           erro
         );
 
+        statusManutencaoTamanhos.classList.toggle(
+          'processando',
+          estaProcessando
+        );
+
+        statusManutencaoTamanhos.classList.toggle(
+          'sucesso',
+          foiConfirmado
+        );
+
         statusManutencaoTamanhos.hidden =
-          mensagem === '';
+          textoMensagem === '';
       }
     }
 
