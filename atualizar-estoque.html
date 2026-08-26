@@ -2886,57 +2886,6 @@
       return true;
     }
 
-         async function recarregarDetalhesProdutoAtual(
-      idProduto
-    ) {
-      const produtoAtual =
-        detalhesProdutoAtual &&
-        detalhesProdutoAtual.produto;
-
-      if (
-        !produtoAtual ||
-        produtoAtual.idProduto !== idProduto
-      ) {
-        return false;
-      }
-
-      sequenciaDetalhes++;
-
-      const requisicaoAtual =
-        sequenciaDetalhes;
-
-      const dados =
-        await consultarApiJsonp(
-          'buscarProdutoAtualizarEstoque',
-          { idProduto }
-        );
-
-      const produtoAindaAberto =
-        detalhesProdutoAtual &&
-        detalhesProdutoAtual.produto &&
-        detalhesProdutoAtual
-          .produto
-          .idProduto === idProduto;
-
-      if (
-        requisicaoAtual !==
-          sequenciaDetalhes ||
-        !produtoAindaAberto
-      ) {
-        return false;
-      }
-
-      if (!dados || !dados.produto) {
-        throw new Error(
-          'O backend não retornou os detalhes atualizados do produto.'
-        );
-      }
-
-      renderizarDetalhes(dados);
-      memorizarProdutoAberto(idProduto);
-
-      return true;
-    }
 
         async function adicionarOuReativarTamanhoPelaInterface() {
       if (manutencaoTamanhoPendente) {
