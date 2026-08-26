@@ -1165,8 +1165,9 @@
         erro
       );
 
-      const deveEspelharNaManutencao =
+            const deveEspelharNaManutencao =
         elemento === statusDetalhes &&
+        !conteudoDetalhes.hidden &&
         !secaoManutencaoTamanhos.hidden;
 
       if (deveEspelharNaManutencao) {
@@ -1209,6 +1210,8 @@
 
         statusManutencaoTamanhos.hidden =
           textoMensagem === '';
+
+                elemento.hidden = true;
       }
     }
 
