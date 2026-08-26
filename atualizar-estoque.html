@@ -203,7 +203,17 @@
       color: #ffffff;
     }
 
-    #statusManutencaoTamanhos.processando
+        #statusManutencaoTamanhos.processando {
+      background: #e8f1f4;
+      color: #314b5c;
+      border-color: #a9c3cd;
+    }
+
+    #statusManutencaoTamanhos.processando::before {
+      content: '…';
+      background: #b7d2dc;
+      color: #243e4d;
+    }
 
     #statusManutencaoTamanhos.erro {
       background: #fef2f2;
