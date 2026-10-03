@@ -292,6 +292,24 @@
       color: #6b7280;
     }
 
+    .alerta-operacional {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 6px;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1;
+      color: #dc2626;
+      vertical-align: middle;
+    }
+
+    .numero-tamanho-com-alerta {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
     .produto-final {
       display: flex;
       flex: 0 0 auto;
@@ -1449,6 +1467,29 @@
       }
     }
 
+    function criarIndicadorAlertaOperacional(
+      descricao
+    ) {
+      const indicador =
+        document.createElement('span');
+
+      indicador.className =
+        'alerta-operacional';
+
+      indicador.textContent = '!';
+      indicador.title = descricao;
+      indicador.setAttribute(
+        'role',
+        'img'
+      );
+      indicador.setAttribute(
+        'aria-label',
+        descricao
+      );
+
+      return indicador;
+    }
+
     function criarLinhaProduto(produto) {
   const envoltorio =
     document.createElement('div');
@@ -1478,11 +1519,27 @@
   modelo.className = 'modelo';
   modelo.textContent = produto.modelo;
 
+  if (produto.possuiAlertaModelo === true) {
+    modelo.appendChild(
+      criarIndicadorAlertaOperacional(
+        'Modelo com reserva ativa ou cliente aguardando'
+      )
+    );
+  }
+
   const cor =
     document.createElement('div');
 
   cor.className = 'cor';
   cor.textContent = produto.cor;
+
+  if (produto.possuiAlertaCor === true) {
+    cor.appendChild(
+      criarIndicadorAlertaOperacional(
+        'Cor com reserva ativa ou cliente aguardando'
+      )
+    );
+  }
 
   const final =
     document.createElement('div');
@@ -2354,8 +2411,27 @@
       const tamanho =
         document.createElement('span');
 
-      tamanho.className = 'numero-tamanho';
-      tamanho.textContent = item.tamanho;
+      tamanho.className =
+        'numero-tamanho-com-alerta';
+
+      const numeroTamanho =
+        document.createElement('span');
+
+      numeroTamanho.className =
+        'numero-tamanho';
+      numeroTamanho.textContent = item.tamanho;
+
+      tamanho.appendChild(numeroTamanho);
+
+      if (
+        item.possuiAlertaOperacional === true
+      ) {
+        tamanho.appendChild(
+          criarIndicadorAlertaOperacional(
+            `Tamanho ${item.tamanho} com reserva ativa ou cliente aguardando`
+          )
+        );
+      }
 
       const disponivel =
         document.createElement('span');
@@ -2789,8 +2865,37 @@
       modeloDetalhes.textContent =
         produto.modelo;
 
+      const produtoNaLista =
+        produtos.find(item =>
+          item.idProduto === produto.idProduto
+        );
+
+      if (
+        produtoNaLista &&
+        produtoNaLista
+          .possuiAlertaModelo === true
+      ) {
+        modeloDetalhes.appendChild(
+          criarIndicadorAlertaOperacional(
+            'Modelo com reserva ativa ou cliente aguardando'
+          )
+        );
+      }
+
       corDetalhes.textContent =
         produto.cor;
+
+      if (
+        produtoNaLista &&
+        produtoNaLista
+          .possuiAlertaCor === true
+      ) {
+        corDetalhes.appendChild(
+          criarIndicadorAlertaOperacional(
+            'Cor com reserva ativa ou cliente aguardando'
+          )
+        );
+      }
 
       tipoEntradaDetalhes.textContent =
         produto.formaEntradaEstoque;
