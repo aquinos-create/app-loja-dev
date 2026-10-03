@@ -340,6 +340,20 @@
       background: #fef2f2;
     }
 
+    .alerta-operacional-link {
+      min-width: 28px;
+      min-height: 36px;
+      margin-left: 3px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+
+    .alerta-operacional-link:hover,
+    .alerta-operacional-link:focus-visible {
+      background: #fee2e2;
+      outline: 2px solid #dc2626;
+    }
+
     .numero-tamanho-com-alerta {
       display: flex;
       align-items: center;
@@ -1079,6 +1093,9 @@
     const API_URL =
       'https://script.google.com/macros/s/AKfycbwUJJCGzZ7j63nOiajISFco-EHiFQG8T2ZDDKfvck0F9-2AN9TP-30p9embQ9vnFXpQ/exec';
 
+    const API_PROTEGIDA_ALERTAS_URL =
+      'https://script.google.com/macros/s/AKfycbyW4reybK8v6rYtOptxn3drMY7NPxeigfWV1BgZ4shpoox5p_dZ5f8DpVzZuIB7MZ8/exec';
+
     const CHAVE_RESPONSAVEL =
       'APP_LOJA_RESPONSAVEL_ATUALIZAR_ESTOQUE';
 
@@ -1530,6 +1547,23 @@
       );
 
       return indicador;
+    }
+
+    function criarLinkDetalhesAlertaOperacional(idProduto, tamanho) {
+      const url = new URL(API_PROTEGIDA_ALERTAS_URL);
+      url.searchParams.set('acao', 'visualizarAlertasAtualizarEstoque');
+      url.searchParams.set('idProduto', String(idProduto));
+      url.searchParams.set('tamanho', String(tamanho));
+
+      const link = document.createElement('a');
+      link.className = 'alerta-operacional alerta-operacional-link';
+      link.textContent = '!';
+      link.href = url.toString();
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.title = `Abrir reservas e lista de espera do tamanho ${tamanho}`;
+      link.setAttribute('aria-label', link.title + ' em nova aba');
+      return link;
     }
 
     function renderizarResumoAlertasTamanhos(tamanhos) {
@@ -2524,8 +2558,9 @@
         item.possuiAlertaOperacional === true
       ) {
         tamanho.appendChild(
-          criarIndicadorAlertaOperacional(
-            `Tamanho ${item.tamanho} com reserva ativa ou cliente aguardando`
+          criarLinkDetalhesAlertaOperacional(
+            idProduto,
+            item.tamanho
           )
         );
       }
