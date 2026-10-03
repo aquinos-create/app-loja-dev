@@ -319,6 +319,11 @@
     }
 
     .atalho-tamanho-alerta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      text-decoration: none;
       padding: 5px 9px;
       font: inherit;
       font-weight: 700;
@@ -1554,19 +1559,23 @@
       url.searchParams.set('acao', 'visualizarAlertasAtualizarEstoque');
       url.searchParams.set('idProduto', String(idProduto));
       url.searchParams.set('tamanho', String(tamanho));
+      url.searchParams.set(
+        'retorno',
+        window.location.origin + window.location.pathname
+      );
 
       const link = document.createElement('a');
       link.className = 'alerta-operacional alerta-operacional-link';
       link.textContent = '!';
       link.href = url.toString();
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+      link.target = '_self';
+      link.rel = 'noreferrer';
       link.title = `Abrir reservas e lista de espera do tamanho ${tamanho}`;
-      link.setAttribute('aria-label', link.title + ' em nova aba');
+      link.setAttribute('aria-label', link.title);
       return link;
     }
 
-    function renderizarResumoAlertasTamanhos(tamanhos) {
+    function renderizarResumoAlertasTamanhos(tamanhos, idProduto) {
       const resumo =
         document.getElementById('resumoAlertasTamanhos');
 
@@ -1600,21 +1609,14 @@
       resumo.appendChild(rotulo);
 
       numeros.forEach(numero => {
-        const atalho = document.createElement('button');
-        atalho.type = 'button';
+        const atalho =
+          criarLinkDetalhesAlertaOperacional(idProduto, numero);
         atalho.className = 'atalho-tamanho-alerta';
         atalho.textContent = String(numero);
         atalho.setAttribute(
           'aria-label',
-          `Ir para o tamanho ${numero} com alerta`
+          `Abrir reservas e lista de espera do tamanho ${numero}`
         );
-        atalho.addEventListener('click', () => {
-          const linha =
-            document.getElementById(`estoque-tamanho-${numero}`);
-          if (!linha) return;
-          linha.scrollIntoView({ block: 'center' });
-          linha.focus({ preventScroll: true });
-        });
         resumo.appendChild(atalho);
       });
     }
@@ -3020,7 +3022,7 @@
         );
       }
 
-      renderizarResumoAlertasTamanhos(tamanhos);
+      renderizarResumoAlertasTamanhos(tamanhos, produto.idProduto);
 
       tipoEntradaDetalhes.textContent =
         produto.formaEntradaEstoque;
