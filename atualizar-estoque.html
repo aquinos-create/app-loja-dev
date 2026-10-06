@@ -306,16 +306,30 @@
 
     .resumo-alertas-tamanhos {
       display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .bloco-alerta-tamanho {
+      display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 8px;
-      margin-top: 12px;
       padding: 10px 12px;
       font-size: 14px;
       background: #fef2f2;
       color: #991b1b;
       border: 1px solid #fecaca;
       border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .bloco-alerta-tamanho:hover { background: #fee2e2; }
+    .bloco-alerta-tamanho:focus-visible {
+      outline: 2px solid #991b1b;
+      outline-offset: 2px;
     }
 
     .atalho-tamanho-alerta {
@@ -1639,28 +1653,22 @@
       resumo.hidden = numeros.length === 0;
       if (resumo.hidden) return;
 
-      resumo.appendChild(
-        criarIndicadorAlertaOperacional(
-          'Tamanhos com reserva ativa ou cliente aguardando'
-        )
-      );
-
-      const rotulo = document.createElement('span');
-      rotulo.textContent = numeros.length === 1
-        ? 'Tamanho com alerta:'
-        : 'Tamanhos com alerta:';
-      resumo.appendChild(rotulo);
-
       numeros.forEach(numero => {
-        const atalho =
+        const bloco =
           criarLinkDetalhesAlertaOperacional(idProduto, numero);
-        atalho.className = 'atalho-tamanho-alerta';
-        atalho.textContent = String(numero);
-        atalho.setAttribute(
-          'aria-label',
-          `Abrir reservas e lista de espera do tamanho ${numero}`
+        bloco.className = 'bloco-alerta-tamanho';
+        bloco.replaceChildren(
+          criarIndicadorAlertaOperacional(
+            'Tamanho com reserva ativa ou cliente aguardando'
+          )
         );
-        resumo.appendChild(atalho);
+        const rotulo = document.createElement('span');
+        rotulo.textContent = 'Tamanho com alerta:';
+        const numeroTamanho = document.createElement('span');
+        numeroTamanho.className = 'atalho-tamanho-alerta';
+        numeroTamanho.textContent = String(numero);
+        bloco.append(rotulo, numeroTamanho);
+        resumo.appendChild(bloco);
       });
     }
 
@@ -1713,7 +1721,7 @@
         botao.type = 'button';
         botao.className = 'ocorrencia-alerta';
         botao.textContent = `${produto.modelo} — ${produto.cor} — ${tamanho} ›`;
-        botao.addEventListener('click', () => abrirProduto(produto.idProduto, tamanho));
+        botao.addEventListener('click', () => abrirProduto(produto.idProduto));
         lista.appendChild(botao);
       });
 
@@ -3631,7 +3639,7 @@
     }
     
     
-    async function abrirProduto(idProduto, tamanhoAlvo) {
+    async function abrirProduto(idProduto) {
       posicaoLista = window.scrollY;
       sequenciaDetalhes++;
 
@@ -3668,20 +3676,6 @@
 
         renderizarDetalhes(dados);
         memorizarProdutoAberto(idProduto);
-
-        if (Number.isInteger(tamanhoAlvo)) {
-          requestAnimationFrame(() => {
-            if (requisicaoAtual !== sequenciaDetalhes || telaDetalhes.hidden) return;
-            const linha = document.getElementById(`estoque-tamanho-${tamanhoAlvo}`);
-            if (linha) {
-              linha.focus({ preventScroll: true });
-              linha.scrollIntoView({ block: 'center' });
-            } else {
-              mostrarStatus(statusDetalhes,
-                'O tamanho do alerta não está mais disponível nesta tela. Confira os alertas atualizados.', true);
-            }
-          });
-        }
 
       } catch (erro) {
         if (requisicaoAtual !== sequenciaDetalhes) {
