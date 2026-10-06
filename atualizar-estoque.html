@@ -781,6 +781,43 @@
         font-size: 11px;
       }
     }
+    .painel-alertas-operacionais {
+      margin: 16px 0;
+      border: 1px solid #fca5a5;
+      border-radius: 10px;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    .painel-alertas-operacionais summary {
+      padding: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .ocorrencia-alerta {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-top: 1px solid #fecaca;
+      background: transparent;
+      color: #991b1b;
+      text-align: left;
+      cursor: pointer;
+      overflow-wrap: anywhere;
+    }
+
+    .ocorrencia-alerta:focus-visible,
+    .painel-alertas-operacionais summary:focus-visible {
+      outline: 2px solid #991b1b;
+      outline-offset: 2px;
+    }
+
+    .status-resumo-alertas {
+      margin: 0;
+      padding: 0 14px 14px;
+    }
   </style>
 </head>
 
@@ -842,6 +879,12 @@
       >
         Carregando produtos...
       </p>
+
+      <details id="painelAlertasOperacionais" class="painel-alertas-operacionais" hidden>
+        <summary id="tituloPainelAlertas">Alertas de reserva e espera</summary>
+        <p id="statusResumoAlertas" class="status-resumo-alertas" role="status" hidden></p>
+        <div id="ocorrenciasAlertas"></div>
+      </details>
 
       <section
         id="secaoFavoritos"
@@ -1619,6 +1662,75 @@
         );
         resumo.appendChild(atalho);
       });
+    }
+
+    async function carregarResumoAlertasOperacionais() {
+      const painel = document.getElementById('painelAlertasOperacionais');
+      const titulo = document.getElementById('tituloPainelAlertas');
+      const status = document.getElementById('statusResumoAlertas');
+      const lista = document.getElementById('ocorrenciasAlertas');
+      const sinalizados = produtos.filter(produto => produto.possuiAlertaCor === true);
+
+      lista.replaceChildren();
+      painel.hidden = sinalizados.length === 0;
+      if (painel.hidden) return;
+
+      titulo.textContent = 'Alertas de reserva e espera — carregando…';
+      status.hidden = false;
+      status.textContent = 'Consultando os tamanhos com alerta…';
+      const ocorrencias = [];
+      let falhas = 0;
+
+      // Usa somente a consulta pública existente, sem buscar dados de clientes.
+      for (const produto of sinalizados) {
+        try {
+          const dados = await consultarApiJsonp(
+            'buscarProdutoAtualizarEstoque', { idProduto: produto.idProduto }
+          );
+          if (!dados || !dados.produto ||
+              dados.produto.idProduto !== produto.idProduto ||
+              !Array.isArray(dados.tamanhos)) {
+            throw new Error('Resposta incompleta dos alertas.');
+          }
+          const tamanhos = [...new Set(dados.tamanhos
+            .filter(item => item.possuiAlertaOperacional === true)
+            .map(item => Number(item.tamanho))
+            .filter(numero => Number.isInteger(numero) && numero >= 18 && numero <= 48)
+          )];
+          tamanhos.forEach(tamanho => ocorrencias.push({ produto, tamanho }));
+        } catch (erro) {
+          falhas++;
+        }
+      }
+
+      ocorrencias.sort((a, b) =>
+        a.produto.modelo.localeCompare(b.produto.modelo, 'pt-BR', { sensitivity: 'base' }) ||
+        a.produto.cor.localeCompare(b.produto.cor, 'pt-BR', { sensitivity: 'base' }) ||
+        a.tamanho - b.tamanho
+      );
+      ocorrencias.forEach(({ produto, tamanho }) => {
+        const botao = document.createElement('button');
+        botao.type = 'button';
+        botao.className = 'ocorrencia-alerta';
+        botao.textContent = `${produto.modelo} — ${produto.cor} — ${tamanho} ›`;
+        botao.addEventListener('click', () => abrirProduto(produto.idProduto, tamanho));
+        lista.appendChild(botao);
+      });
+
+      painel.hidden = ocorrencias.length === 0 && falhas === 0;
+      titulo.textContent = falhas
+        ? 'Alertas de reserva e espera — consulta incompleta'
+        : `Alertas de reserva e espera — ${ocorrencias.length}`;
+      status.hidden = falhas === 0;
+      if (falhas) {
+        status.textContent = 'Não foi possível consultar todos os alertas. Tente novamente.';
+        const tentar = document.createElement('button');
+        tentar.type = 'button';
+        tentar.className = 'ocorrencia-alerta';
+        tentar.textContent = 'Tentar novamente';
+        tentar.addEventListener('click', carregarResumoAlertasOperacionais);
+        lista.appendChild(tentar);
+      }
     }
 
     function criarLinhaProduto(produto) {
@@ -3519,7 +3631,7 @@
     }
     
     
-    async function abrirProduto(idProduto) {
+    async function abrirProduto(idProduto, tamanhoAlvo) {
       posicaoLista = window.scrollY;
       sequenciaDetalhes++;
 
@@ -3556,6 +3668,20 @@
 
         renderizarDetalhes(dados);
         memorizarProdutoAberto(idProduto);
+
+        if (Number.isInteger(tamanhoAlvo)) {
+          requestAnimationFrame(() => {
+            if (requisicaoAtual !== sequenciaDetalhes || telaDetalhes.hidden) return;
+            const linha = document.getElementById(`estoque-tamanho-${tamanhoAlvo}`);
+            if (linha) {
+              linha.focus({ preventScroll: true });
+              linha.scrollIntoView({ block: 'center' });
+            } else {
+              mostrarStatus(statusDetalhes,
+                'O tamanho do alerta não está mais disponível nesta tela. Confira os alertas atualizados.', true);
+            }
+          });
+        }
 
       } catch (erro) {
         if (requisicaoAtual !== sequenciaDetalhes) {
@@ -3602,6 +3728,8 @@
 
                 campoPesquisa.disabled = false;
         renderizarProdutos();
+
+        carregarResumoAlertasOperacionais();
 
         const idProdutoMemorizado =
           obterProdutoAbertoMemorizado();
