@@ -1408,7 +1408,10 @@
               'O backend demorou para responder.'
             )
           );
-        }, 15000);
+        }, (
+          acao === 'listarProdutosAtualizarEstoque' ||
+          acao === 'buscarProdutoAtualizarEstoque'
+        ) ? 30000 : 15000);
 
         function limparConsulta() {
           clearTimeout(tempoLimite);
@@ -1672,6 +1675,18 @@
       });
     }
 
+    const consultasProdutosEmAndamento = new Map();
+
+    function consultarProdutoParaNavegacao(idProduto) {
+      if (!consultasProdutosEmAndamento.has(idProduto)) {
+        const consulta = consultarApiJsonp(
+          'buscarProdutoAtualizarEstoque', { idProduto }
+        ).finally(() => consultasProdutosEmAndamento.delete(idProduto));
+        consultasProdutosEmAndamento.set(idProduto, consulta);
+      }
+      return consultasProdutosEmAndamento.get(idProduto);
+    }
+
     async function carregarResumoAlertasOperacionais() {
       const painel = document.getElementById('painelAlertasOperacionais');
       const titulo = document.getElementById('tituloPainelAlertas');
@@ -1692,9 +1707,7 @@
       // Usa somente a consulta pública existente, sem buscar dados de clientes.
       for (const produto of sinalizados) {
         try {
-          const dados = await consultarApiJsonp(
-            'buscarProdutoAtualizarEstoque', { idProduto: produto.idProduto }
-          );
+          const dados = await consultarProdutoParaNavegacao(produto.idProduto);
           if (!dados || !dados.produto ||
               dados.produto.idProduto !== produto.idProduto ||
               !Array.isArray(dados.tamanhos)) {
@@ -3659,10 +3672,7 @@
 
       try {
         const dados =
-          await consultarApiJsonp(
-            'buscarProdutoAtualizarEstoque',
-            { idProduto }
-          );
+          await consultarProdutoParaNavegacao(idProduto);
 
         if (requisicaoAtual !== sequenciaDetalhes) {
           return;
