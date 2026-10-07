@@ -1385,9 +1385,28 @@
       );
     }
 
-    function consultarApiJsonp(
+    async function consultarApiJsonp(acao, parametros = {}) {
+      const leituraRepetivel = acao === 'listarProdutosAtualizarEstoque' ||
+        acao === 'buscarProdutoAtualizarEstoque';
+      const prazo = Date.now() + (leituraRepetivel ? 30000 : 15000);
+      for (let tentativa = 0; ; tentativa++) {
+        if (Date.now() >= prazo) throw new Error('O backend demorou para responder.');
+        try {
+          return await executarConsultaApiJsonp(acao, parametros, prazo - Date.now());
+        } catch (erro) {
+          // Uma única repetição de transporte, dentro do mesmo prazo total.
+          // Erros do backend, timeout e operações de escrita não são repetidos.
+          if (!leituraRepetivel || tentativa > 0 || !erro.falhaTransitoria ||
+              prazo - Date.now() <= 500) throw erro;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    }
+
+    function executarConsultaApiJsonp(
       acao,
-      parametros = {}
+      parametros,
+      prazoRestante
     ) {
       return new Promise((resolve, reject) => {
         sequenciaCallback++;
@@ -1408,10 +1427,7 @@
               'O backend demorou para responder.'
             )
           );
-        }, (
-          acao === 'listarProdutosAtualizarEstoque' ||
-          acao === 'buscarProdutoAtualizarEstoque'
-        ) ? 30000 : 15000);
+        }, Math.max(0, prazoRestante));
 
         function limparConsulta() {
           clearTimeout(tempoLimite);
@@ -1456,11 +1472,9 @@
         script.onerror = () => {
           limparConsulta();
 
-          reject(
-            new Error(
-              'Não foi possível acessar o backend.'
-            )
-          );
+          const erro = new Error('Não foi possível acessar o backend.');
+          erro.falhaTransitoria = true;
+          reject(erro);
         };
 
         document.body.appendChild(script);
@@ -1687,42 +1701,28 @@
       return consultasProdutosEmAndamento.get(idProduto);
     }
 
-    async function carregarResumoAlertasOperacionais() {
+    function carregarResumoAlertasOperacionais(resumoAlertas) {
       const painel = document.getElementById('painelAlertasOperacionais');
       const titulo = document.getElementById('tituloPainelAlertas');
       const status = document.getElementById('statusResumoAlertas');
       const lista = document.getElementById('ocorrenciasAlertas');
-      const sinalizados = produtos.filter(produto => produto.possuiAlertaCor === true);
-
       lista.replaceChildren();
-      painel.hidden = sinalizados.length === 0;
-      if (painel.hidden) return;
-
-      titulo.textContent = 'Alertas de reserva e espera — carregando…';
-      status.hidden = false;
-      status.textContent = 'Consultando os tamanhos com alerta…';
       const ocorrencias = [];
-      let falhas = 0;
-
-      // Usa somente a consulta pública existente, sem buscar dados de clientes.
-      for (const produto of sinalizados) {
-        try {
-          const dados = await consultarProdutoParaNavegacao(produto.idProduto);
-          if (!dados || !dados.produto ||
-              dados.produto.idProduto !== produto.idProduto ||
-              !Array.isArray(dados.tamanhos)) {
-            throw new Error('Resposta incompleta dos alertas.');
-          }
-          const tamanhos = [...new Set(dados.tamanhos
-            .filter(item => item.possuiAlertaOperacional === true)
-            .map(item => Number(item.tamanho))
-            .filter(numero => Number.isInteger(numero) && numero >= 18 && numero <= 48)
-          )];
-          tamanhos.forEach(tamanho => ocorrencias.push({ produto, tamanho }));
-        } catch (erro) {
-          falhas++;
+      const porId = new Map(produtos.map(produto => [produto.idProduto, produto]));
+      const vistos = new Set();
+      let falhas = !Array.isArray(resumoAlertas);
+      (Array.isArray(resumoAlertas) ? resumoAlertas : []).forEach(item => {
+        const produto = item && porId.get(item.idProduto);
+        const tamanho = item && item.tamanho;
+        if (!produto || !Number.isInteger(tamanho) || tamanho < 18 || tamanho > 48) {
+          falhas = true;
+          return;
         }
-      }
+        const chave = `${produto.idProduto}|${tamanho}`;
+        if (vistos.has(chave)) return;
+        vistos.add(chave);
+        ocorrencias.push({ produto, tamanho });
+      });
 
       ocorrencias.sort((a, b) =>
         a.produto.modelo.localeCompare(b.produto.modelo, 'pt-BR', { sensitivity: 'base' }) ||
@@ -1738,18 +1738,18 @@
         lista.appendChild(botao);
       });
 
-      painel.hidden = ocorrencias.length === 0 && falhas === 0;
+      painel.hidden = ocorrencias.length === 0 && !falhas;
       titulo.textContent = falhas
         ? 'Alertas de reserva e espera — consulta incompleta'
         : `Alertas de reserva e espera — ${ocorrencias.length}`;
-      status.hidden = falhas === 0;
+      status.hidden = !falhas;
       if (falhas) {
         status.textContent = 'Não foi possível consultar todos os alertas. Tente novamente.';
         const tentar = document.createElement('button');
         tentar.type = 'button';
         tentar.className = 'ocorrencia-alerta';
         tentar.textContent = 'Tentar novamente';
-        tentar.addEventListener('click', carregarResumoAlertasOperacionais);
+        tentar.addEventListener('click', carregarDadosIniciais);
         lista.appendChild(tentar);
       }
     }
@@ -3733,7 +3733,7 @@
                 campoPesquisa.disabled = false;
         renderizarProdutos();
 
-        carregarResumoAlertasOperacionais();
+        carregarResumoAlertasOperacionais(dados.resumoAlertas);
 
         const idProdutoMemorizado =
           obterProdutoAbertoMemorizado();
