@@ -869,6 +869,10 @@
       </a>
     </header>
 
+    <aside id="confirmacaoEscrita" class="status" role="status" hidden>
+      <p id="textoConfirmacaoEscrita"></p>
+      <button type="button" id="botaoConfirmacaoEscrita">Conferir operação</button>
+    </aside>
     <section
       id="telaLista"
       class="painel"
@@ -1385,9 +1389,97 @@
       );
     }
 
+    // Uma operação incerta só pode ser consultada, nunca reenviada automaticamente.
+    const CHAVE_ESCRITA_PENDENTE = 'appLojaDevEscritaPendente';
+    let escritaPendente = null;
+    let confirmacaoEmCurso = false;
+    const painelConfirmacao = document.getElementById('confirmacaoEscrita');
+    const textoConfirmacao = document.getElementById('textoConfirmacaoEscrita');
+    const botaoConfirmacao = document.getElementById('botaoConfirmacaoEscrita');
+    try { escritaPendente = JSON.parse(sessionStorage.getItem(CHAVE_ESCRITA_PENDENTE) || 'null'); } catch (_) {}
+
+    function exibirConfirmacaoEscrita(mensagem) {
+      painelConfirmacao.hidden = !escritaPendente && !mensagem;
+      textoConfirmacao.textContent = mensagem || 'Existe uma operação sem confirmação. Consulte o resultado antes de fazer outra alteração.';
+      botaoConfirmacao.hidden = !escritaPendente;
+      botaoConfirmacao.disabled = confirmacaoEmCurso;
+    }
+
+    function guardarEscritaPendente(operacao) {
+      // Se não for possível preservar a chave, não iniciar uma escrita nova.
+      if (operacao) sessionStorage.setItem(CHAVE_ESCRITA_PENDENTE, JSON.stringify(operacao));
+      else sessionStorage.removeItem(CHAVE_ESCRITA_PENDENTE);
+      escritaPendente = operacao;
+    }
+
+    async function consultarConfirmacaoEscrita() {
+      return consultarApiJsonp('consultarResultadoEscritaAtualizarEstoque', {
+        ...escritaPendente.parametros, acaoOriginal: escritaPendente.acao
+      });
+    }
+
+    async function consultarEscritaComConfirmacao(acao, parametros) {
+      if (escritaPendente) throw new Error('Há uma operação sem confirmação. Use “Conferir operação”; a escrita não será reenviada.');
+      guardarEscritaPendente({ acao, parametros });
+      confirmacaoEmCurso = true;
+      exibirConfirmacaoEscrita('Aguardando confirmação da gravação…');
+      try {
+        let dados;
+        try {
+          dados = await consultarApiJsonp(acao, parametros);
+        } catch (erro) {
+          if (!erro.respostaIncerta && !erro.falhaTransitoria) {
+            guardarEscritaPendente(null);
+            throw erro;
+          }
+          exibirConfirmacaoEscrita('A resposta da gravação não chegou. Consultando o resultado sem repetir a operação…');
+          let consulta;
+          try { consulta = await consultarConfirmacaoEscrita(); } catch (_) {}
+          if (!consulta || consulta.confirmacao !== 'CONFIRMADA') {
+            throw new Error('Resultado ainda não confirmado. A operação pode ter sido concluída. Use “Conferir operação”; não repita a escrita.');
+          }
+          dados = consulta.resultado;
+        }
+        guardarEscritaPendente(null);
+        exibirConfirmacaoEscrita('');
+        return dados;
+      } finally {
+        confirmacaoEmCurso = false;
+        exibirConfirmacaoEscrita(escritaPendente ? 'Resultado ainda incerto. Nenhuma escrita será repetida. Use “Conferir operação”.' : '');
+      }
+    }
+
+    botaoConfirmacao.addEventListener('click', async () => {
+      if (!escritaPendente || confirmacaoEmCurso) return;
+      const operacao = escritaPendente;
+      confirmacaoEmCurso = true;
+      exibirConfirmacaoEscrita('Consultando o resultado, sem repetir a escrita…');
+      let mensagem;
+      try {
+        const consulta = await consultarConfirmacaoEscrita();
+        if (consulta.confirmacao !== 'CONFIRMADA') {
+          mensagem = 'Resultado ainda não confirmado. Aguarde e consulte novamente. Nenhuma escrita foi repetida.';
+        } else {
+          guardarEscritaPendente(null);
+          mensagem = 'Gravação confirmada. Ao abrir o produto, será consultado o estoque atual.';
+          try {
+            if (await recarregarDetalhesProdutoAtual(operacao.parametros.idProduto)) mensagem = 'Gravação confirmada. A tela foi atualizada com o estoque atual.';
+          } catch (_) {
+            mensagem = 'Gravação confirmada, mas a atualização da tela não chegou. Reabra o produto; não repita a escrita.';
+          }
+        }
+      } catch (_) {
+        mensagem = 'A consulta de confirmação não respondeu. O resultado continua incerto; não repita a escrita.';
+      } finally {
+        confirmacaoEmCurso = false;
+        exibirConfirmacaoEscrita(mensagem);
+      }
+    });
+    exibirConfirmacaoEscrita('');
+
     async function consultarApiJsonp(acao, parametros = {}) {
       const leituraRepetivel = acao === 'listarProdutosAtualizarEstoque' ||
-        acao === 'buscarProdutoAtualizarEstoque';
+        acao === 'buscarProdutoAtualizarEstoque' || acao === 'consultarResultadoEscritaAtualizarEstoque';
       const prazo = Date.now() + (leituraRepetivel ? 30000 : 15000);
       for (let tentativa = 0; ; tentativa++) {
         if (Date.now() >= prazo) throw new Error('O backend demorou para responder.');
@@ -1422,11 +1514,9 @@
         const tempoLimite = setTimeout(() => {
           limparConsulta();
 
-          reject(
-            new Error(
-              'O backend demorou para responder.'
-            )
-          );
+          const erro = new Error('A resposta do backend não chegou no prazo.');
+          erro.respostaIncerta = true;
+          reject(erro);
         }, Math.max(0, prazoRestante));
 
         function limparConsulta() {
@@ -2397,7 +2487,7 @@
 
       try {
         const dados =
-          await consultarApiJsonp(
+          await consultarEscritaComConfirmacao(
             'gravarQuantidadeTotalAtualizarEstoque',
             {
               idProduto,
@@ -3347,7 +3437,7 @@
 
       try {
         const dados =
-          await consultarApiJsonp(
+          await consultarEscritaComConfirmacao(
             'adicionarOuReativarTamanhoVariadoAtualizarEstoque',
             {
               idProduto:
@@ -3532,7 +3622,7 @@
 
       try {
         const dados =
-          await consultarApiJsonp(
+          await consultarEscritaComConfirmacao(
             'desativarTamanhoVariadoAtualizarEstoque',
             {
               idProduto:
