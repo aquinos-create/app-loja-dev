@@ -40,29 +40,12 @@
       color: #6b7280;
     }
 
-    .navegacao-modulos {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 0 0 18px;
-    }
-
-    .navegacao-modulos a {
-      flex: 1 1 auto;
-      padding: 10px 12px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: 700;
-      color: #111827;
-      text-decoration: none;
-      background: #e5e7eb;
-      border-radius: 8px;
-    }
-
-    .navegacao-modulos a[aria-current="page"] {
-      background: #111827;
-      color: #ffffff;
-    }
+    .menu-global { position:relative; display:flex; justify-content:flex-end; margin:0 0 14px; }
+    .botao-menu-global { width:auto; min-height:42px; padding:9px 13px; border:0; border-radius:8px; background:#e5e7eb; color:#111827; font-weight:700; cursor:pointer; }
+    .painel-menu-global { position:absolute; z-index:30; right:0; top:48px; display:grid; gap:6px; min-width:220px; padding:8px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 24px #0002; }
+    .painel-menu-global a { padding:10px 12px; border-radius:7px; color:#111827; text-decoration:none; font-weight:700; }
+    .painel-menu-global a[aria-current="page"] { background:#111827; color:#fff; }
+    [hidden] { display:none !important; }
 
     .atalho-atualizar-estoque {
       display: inline-flex;
@@ -347,17 +330,20 @@ dialog::backdrop {
 
 <body>
   <main class="container">
+    <div class="menu-global">
+      <button id="botaoMenuGlobal" class="botao-menu-global" type="button" aria-expanded="false" aria-controls="painelMenuGlobal">☰ Menu</button>
+      <nav id="painelMenuGlobal" class="painel-menu-global" aria-label="Menu de módulos" hidden>
+        <a href="index.html">🏠 Início</a>
+        <a href="consulta.html" aria-current="page">🔎 Consulta</a>
+        <a href="atualizar-estoque.html">📦 Atualizar Estoque</a>
+        <a href="https://script.google.com/macros/s/AKfycbyW4reybK8v6rYtOptxn3drMY7NPxeigfWV1BgZ4shpoox5p_dZ5f8DpVzZuIB7MZ8/exec?acao=abrirListaEspera">📋 Lista de Espera</a>
+      </nav>
+    </div>
     <h1>Consulta de Estoque</h1>
 
     <p class="subtitulo">
       Ambiente de desenvolvimento
     </p>
-    <nav class="navegacao-modulos" aria-label="Navegação dos módulos">
-      <a href="index.html">Início</a>
-      <a href="consulta.html" aria-current="page">Consulta</a>
-      <a href="atualizar-estoque.html">Atualizar Estoque</a>
-      <a href="https://script.google.com/macros/s/AKfycbyW4reybK8v6rYtOptxn3drMY7NPxeigfWV1BgZ4shpoox5p_dZ5f8DpVzZuIB7MZ8/exec?acao=abrirListaEspera">Lista de Espera</a>
-    </nav>
 
     <section class="painel">
       <div class="grupo-filtro">
@@ -1247,6 +1233,11 @@ botaoAbrirCompartilhamento.addEventListener(
         }
       }
     );
-  </script>
+
+  const botaoMenuGlobal=document.getElementById('botaoMenuGlobal');
+  const painelMenuGlobal=document.getElementById('painelMenuGlobal');
+  botaoMenuGlobal.addEventListener('click',()=>{const abrir=painelMenuGlobal.hidden;painelMenuGlobal.hidden=!abrir;botaoMenuGlobal.setAttribute('aria-expanded',String(abrir));});
+  painelMenuGlobal.addEventListener('click',event=>{if(event.target.closest('a')){painelMenuGlobal.hidden=true;botaoMenuGlobal.setAttribute('aria-expanded','false');}});
+</script>
 </body>
 </html>
