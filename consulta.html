@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Consulta de Estoque — DEV</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px 16px;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #1f2937;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+    }
+
+        .subtitulo {
+      margin: 0 0 12px;
+      color: #6b7280;
+    }
+
+    .navegacao-modulos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+
+    .navegacao-modulos a {
+      flex: 1 1 auto;
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+      text-decoration: none;
+      background: #e5e7eb;
+      border-radius: 8px;
+    }
+
+    .navegacao-modulos a[aria-current="page"] {
+      background: #111827;
+      color: #ffffff;
+    }
+
+    .atalho-atualizar-estoque {
+      display: inline-flex;
+      margin-bottom: 24px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      background: #111827;
+      color: #ffffff;
+      border-radius: 8px;
+    }
+
+    .painel {
+      padding: 20px;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+    }
+
+    .grupo-filtro {
+  margin-bottom: 20px;
+}
+
+.grupo-filtro:last-of-type {
+  margin-bottom: 18px;
+}
+
+.cabecalho-filtro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.titulo-filtro {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.cabecalho-filtro .titulo-filtro {
+  margin-bottom: 0;
+}
+
+.chips-filtro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+    .grupo-filtro-centralizado > .titulo-filtro {
+  text-align: center;
+}
+
+.grupo-filtro-centralizado .chips-filtro {
+  justify-content: center;
+}
+
+.grupo-filtro-centralizado .cabecalho-filtro {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.grupo-filtro-centralizado
+  .cabecalho-filtro
+  .titulo-filtro {
+  grid-column: 2;
+  text-align: center;
+}
+
+.grupo-filtro-centralizado
+  .botao-limpar-filtros {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.chip-filtro {
+  width: auto;
+  padding: 9px 13px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #9ca3af;
+  border-radius: 999px;
+}
+
+.chip-filtro[aria-pressed="true"] {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+.botao-limpar-filtros {
+  width: auto;
+  padding: 2px 0;
+  font-size: 13px;
+  font-weight: 400;
+  background: transparent;
+  color: #4b5563;
+  border-radius: 0;
+}
+
+.botao-limpar-filtros:hover {
+  text-decoration: underline;
+}
+
+.botao-consultar {
+  width: 100%;
+}
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .linha-busca {
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      padding: 13px;
+      font-size: 18px;
+      border: 1px solid #9ca3af;
+      border-radius: 8px;
+    }
+
+    button {
+      padding: 13px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 0;
+      border-radius: 8px;
+      background: #111827;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    #status {
+      min-height: 22px;
+      margin: 18px 0 10px;
+      color: #4b5563;
+    }
+
+    .resultado {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .resultado:last-child {
+      border-bottom: 0;
+    }
+
+    .modelo {
+      font-weight: 700;
+    }
+
+    .cor {
+      margin-top: 4px;
+      color: #6b7280;
+    }
+
+    .seletor {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 auto;
+      border: 2px solid #9ca3af;
+      border-radius: 50%;
+    }
+    .resultado {
+  cursor: pointer;
+}
+
+.resultado.selecionado {
+  padding-left: 10px;
+  padding-right: 10px;
+  background: #eef2f7;
+  border-radius: 8px;
+}
+
+.seletor.selecionado {
+  background: #111827;
+  border-color: #111827;
+  box-shadow: inset 0 0 0 4px #ffffff;
+}
+    .erro {
+      color: #b91c1c !important;
+    }
+    .barra-selecao {
+  position: sticky;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: #111827;
+  color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.barra-selecao[hidden] {
+  display: none;
+}
+
+.barra-selecao button {
+  padding: 10px 14px;
+  background: #ffffff;
+  color: #111827;
+}
+
+.barra-selecao button:disabled {
+  opacity: 0.45;
+}
+dialog {
+  width: calc(100% - 32px);
+  max-width: 520px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal-conteudo {
+  padding: 22px;
+}
+
+.modal-conteudo h2 {
+  margin: 0 0 12px;
+}
+
+.modal-conteudo textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px;
+  font: inherit;
+  resize: vertical;
+  border: 1px solid #9ca3af;
+  border-radius: 8px;
+}
+
+.modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+#botaoVoltar {
+  background: #e5e7eb;
+  color: #111827;
+}
+    @media (max-width: 420px) {
+      .linha-busca {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h1>Consulta de Estoque</h1>
+
+    <p class="subtitulo">
+      Ambiente de desenvolvimento
+    </p>
+    <nav class="navegacao-modulos" aria-label="Navegação dos módulos">
+      <a href="index.html">Início</a>
+      <a href="consulta.html" aria-current="page">Consulta</a>
+      <a href="atualizar-estoque.html">Atualizar Estoque</a>
+      <a href="https://script.google.com/macros/s/AKfycbyW4reybK8v6rYtOptxn3drMY7NPxeigfWV1BgZ4shpoox5p_dZ5f8DpVzZuIB7MZ8/exec?acao=abrirListaEspera">Lista de Espera</a>
+    </nav>
+
+    <section class="painel">
+      <div class="grupo-filtro">
+  <label for="tamanho">
+    Tamanho
+  </label>
+
+  <input
+    id="tamanho"
+    type="number"
+    min="18"
+    max="48"
+    step="1"
+    inputmode="numeric"
+    placeholder="Ex.: 37"
+  >
+</div>
+
+<div class="grupo-filtro grupo-filtro-centralizado">
+  <div class="cabecalho-filtro">
+    <span class="titulo-filtro">
+      Público
+    </span>
+
+    <button
+      id="botaoLimparFiltros"
+      class="botao-limpar-filtros"
+      type="button"
+      hidden
+    >
+      Limpar filtros
+    </button>
+  </div>
+
+  <div
+    id="filtrosPublico"
+    class="chips-filtro"
+  >
+    <button
+      class="chip-filtro"
+      type="button"
+      data-publico="Feminino"
+      aria-pressed="false"
+    >
+      Feminino
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-publico="Masculino"
+      aria-pressed="false"
+    >
+      Masculino
+    </button>
+  </div>
+</div>
+
+<div class="grupo-filtro grupo-filtro-centralizado">
+  <span class="titulo-filtro">
+    Uso
+  </span>
+
+  <div
+    id="filtrosUso"
+    class="chips-filtro"
+  >
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Esportivo"
+      aria-pressed="false"
+    >
+      Esportivo
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Sair"
+      aria-pressed="false"
+    >
+      Sair
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Trabalho"
+      aria-pressed="false"
+    >
+      Trabalho
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Dia a dia"
+      aria-pressed="false"
+    >
+      Dia a dia
+    </button>
+
+    <button
+      class="chip-filtro"
+      type="button"
+      data-uso="Casual"
+      aria-pressed="false"
+    >
+      Casual
+    </button>
+  </div>
+</div>
+
+<button
+  id="botaoBuscar"
+  class="botao-consultar"
+  type="button"
+>
+  Consultar
+</button>
+
+      <p id="status"></p>
+
+<div id="resultados"></div>
+
+
+      <div
+  id="barraSelecao"
+  class="barra-selecao"
+  hidden
+>
+  <span id="contadorSelecionados">
+    0 selecionados
+  </span>
+
+  <button
+    id="botaoCompartilhar"
+    type="button"
+    disabled
+  >
+    Compartilhar
+  </button>
+</div>
+    </section>
+    <dialog id="modalCompartilhar">
+  <div class="modal-conteudo">
+    <h2>Compartilhar modelos</h2>
+
+    <p id="resumoCompartilhar"></p>
+
+    <label for="mensagemCompartilhar">
+      Mensagem
+    </label>
+
+    <textarea id="mensagemCompartilhar">Temos esses modelos disponíveis 😊</textarea>
+
+    <div class="modal-acoes">
+      <button
+        id="botaoVoltar"
+        type="button"
+      >
+        Voltar
+      </button>
+
+      <button
+        id="botaoAbrirCompartilhamento"
+        type="button"
+      >
+        Abrir compartilhamento
+      </button>
+    </div>
+  </div>
+</dialog>
+  </main>
+
+  <script>
+    const API_URL =
+      'https://script.google.com/macros/s/AKfycbwUJJCGzZ7j63nOiajISFco-EHiFQG8T2ZDDKfvck0F9-2AN9TP-30p9embQ9vnFXpQ/exec';
+
+    const campoTamanho =
+      document.getElementById('tamanho');
+
+    const botaoBuscar =
+      document.getElementById('botaoBuscar');
+
+    const filtrosPublico =
+  document.getElementById('filtrosPublico');
+
+const filtrosUso =
+  document.getElementById('filtrosUso');
+
+const botaoLimparFiltros =
+  document.getElementById('botaoLimparFiltros');
+
+    const statusElemento =
+      document.getElementById('status');
+
+    const resultadosElemento =
+      document.getElementById('resultados');
+
+    const barraSelecao =
+  document.getElementById('barraSelecao');
+
+const contadorSelecionados =
+  document.getElementById('contadorSelecionados');
+
+const botaoCompartilhar =
+  document.getElementById('botaoCompartilhar');
+
+    const modalCompartilhar =
+  document.getElementById('modalCompartilhar');
+
+const resumoCompartilhar =
+  document.getElementById('resumoCompartilhar');
+
+const mensagemCompartilhar =
+  document.getElementById('mensagemCompartilhar');
+
+const botaoVoltar =
+  document.getElementById('botaoVoltar');
+
+const botaoAbrirCompartilhamento =
+  document.getElementById('botaoAbrirCompartilhamento');
+const selecionados = new Map();
+    let arquivosFotoPreparados = [];
+
+    let publicoSelecionado = '';
+
+const usosSelecionados =
+  new Set();
+
+    function atualizarFiltrosVisuais() {
+  filtrosPublico
+    .querySelectorAll('[data-publico]')
+    .forEach(chip => {
+      const ativo =
+        chip.dataset.publico ===
+        publicoSelecionado;
+
+      chip.setAttribute(
+        'aria-pressed',
+        String(ativo)
+      );
+    });
+
+  filtrosUso
+    .querySelectorAll('[data-uso]')
+    .forEach(chip => {
+      const ativo =
+        usosSelecionados.has(
+          chip.dataset.uso
+        );
+
+      chip.setAttribute(
+        'aria-pressed',
+        String(ativo)
+      );
+    });
+
+  botaoLimparFiltros.hidden =
+    !publicoSelecionado &&
+    usosSelecionados.size === 0;
+}
+
+
+    function mostrarStatus(mensagem, erro = false) {
+      statusElemento.textContent = mensagem;
+
+      statusElemento.classList.toggle(
+        'erro',
+        erro
+      );
+    }
+
+
+    function limparResultados() {
+  resultadosElemento.replaceChildren();
+
+  selecionados.clear();
+
+  atualizarBarraSelecao();
+}
+function atualizarBarraSelecao() {
+  const quantidade = selecionados.size;
+
+  barraSelecao.hidden = quantidade === 0;
+
+  contadorSelecionados.textContent =
+    quantidade === 1
+      ? '1 selecionado'
+      : quantidade + ' selecionados';
+
+  botaoCompartilhar.disabled =
+    quantidade === 0;
+}
+
+
+function alternarSelecao(produto, linha, seletor) {
+  const idProduto = produto.idProduto;
+
+  if (selecionados.has(idProduto)) {
+    selecionados.delete(idProduto);
+  } else {
+    selecionados.set(idProduto, produto);
+  }
+
+  const estaSelecionado =
+    selecionados.has(idProduto);
+
+  linha.classList.toggle(
+    'selecionado',
+    estaSelecionado
+  );
+
+  seletor.classList.toggle(
+    'selecionado',
+    estaSelecionado
+  );
+
+    mostrarStatus('');
+  atualizarBarraSelecao();
+}
+
+    function exibirResultados(dados) {
+  limparResultados();
+
+  const modelos = dados.modelos || [];
+
+const tamanhoConsultado =
+  Number(dados.tamanho);
+
+const publicoAplicado =
+  String(dados.publico || '').trim();
+
+const usosAplicados =
+  Array.isArray(dados.usos)
+    ? dados.usos
+    : [];
+
+if (modelos.length === 0) {
+  const filtrosAplicados = [
+    publicoAplicado,
+    ...usosAplicados
+  ].filter(criterio => criterio !== '');
+
+  if (filtrosAplicados.length === 0) {
+    mostrarStatus(
+      'Nenhum produto disponível no tamanho ' +
+        tamanhoConsultado +
+        '.'
+    );
+  } else {
+    mostrarStatus(
+      'Nenhum produto disponível para: ' +
+        [
+          tamanhoConsultado,
+          ...filtrosAplicados
+        ].join(' • ') +
+        '.'
+    );
+  }
+
+  return;
+}
+
+  mostrarStatus(
+    modelos.length +
+    ' modelo(s) encontrado(s).'
+  );
+
+  modelos.forEach(produto => {
+    const linha =
+      document.createElement('div');
+
+    linha.className = 'resultado';
+    linha.tabIndex = 0;
+    linha.setAttribute('role', 'button');
+
+    const textos =
+      document.createElement('div');
+
+    const modelo =
+      document.createElement('div');
+
+    modelo.className = 'modelo';
+    modelo.textContent = produto.modelo;
+
+    const cor =
+      document.createElement('div');
+
+    cor.className = 'cor';
+    cor.textContent = produto.cor;
+
+    const seletor =
+      document.createElement('div');
+
+    seletor.className = 'seletor';
+
+    linha.addEventListener('click', () => {
+      alternarSelecao(
+        produto,
+        linha,
+        seletor
+      );
+    });
+
+    linha.addEventListener(
+      'keydown',
+      evento => {
+        if (
+          evento.key === 'Enter' ||
+          evento.key === ' '
+        ) {
+          evento.preventDefault();
+
+          alternarSelecao(
+            produto,
+            linha,
+            seletor
+          );
+        }
+      }
+    );
+
+    textos.append(modelo, cor);
+    linha.append(textos, seletor);
+
+    resultadosElemento.appendChild(linha);
+
+
+  });
+}
+
+  async function abrirModalCompartilhar() {
+    mostrarStatus('');
+
+  const produtosSelecionados =
+    Array.from(selecionados.values());
+
+  const produtoSemFoto =
+    produtosSelecionados.find(
+      produto =>
+        !String(produto.fotoId || '').trim()
+    );
+
+  if (produtoSemFoto) {
+    mostrarStatus(
+      produtoSemFoto.modelo +
+        ' — ' +
+        produtoSemFoto.cor +
+        ' ainda não possui foto cadastrada.',
+      true
+    );
+
+    return;
+  }
+
+  arquivosFotoPreparados = [];
+
+  try {
+    for (const produto of produtosSelecionados) {
+      const dadosFoto =
+        await consultarFotoProduto(produto.idProduto);
+
+      const arquivoFoto =
+        transformarFotoEmArquivo(dadosFoto);
+
+      arquivosFotoPreparados.push(arquivoFoto);
+    }
+  } catch (erro) {
+    arquivosFotoPreparados = [];
+
+    mostrarStatus(
+      'Não foi possível preparar todas as fotos.',
+      true
+    );
+
+    return;
+  }
+
+  const quantidade = selecionados.size;
+
+  resumoCompartilhar.textContent =
+    quantidade === 1
+      ? '1 modelo selecionado.'
+      : quantidade + ' modelos selecionados.';
+
+  modalCompartilhar.showModal();
+}
+
+    async function abrirCompartilhamentoNativo() {
+  const produtosSelecionados =
+    Array.from(selecionados.values());
+
+  const listaModelos =
+    produtosSelecionados
+      .map(
+        produto =>
+          produto.modelo + ' — ' + produto.cor
+      )
+      .join('\n');
+
+  const mensagem =
+    mensagemCompartilhar.value.trim();
+
+  const textoCompartilhamento =
+    [mensagem, '', listaModelos]
+      .filter(parte => parte !== '')
+      .join('\n');
+
+  try {
+    if (navigator.share) {
+      if (
+        arquivosFotoPreparados.length === 0 ||
+        arquivosFotoPreparados.length !==
+          produtosSelecionados.length
+      ) {
+        mostrarStatus(
+          'As fotos ainda não estão prontas para compartilhamento.',
+          true
+        );
+
+        return;
+      }
+
+      if (
+        !navigator.canShare ||
+        !navigator.canShare({
+          files: arquivosFotoPreparados
+        })
+      ) {
+        mostrarStatus(
+          'Este dispositivo não permite compartilhar estas fotos juntas.',
+          true
+        );
+
+        return;
+      }
+
+      const dadosCompartilhamento = {
+        text: textoCompartilhamento,
+        files: arquivosFotoPreparados
+      };
+
+      await navigator.share(dadosCompartilhamento);
+
+      modalCompartilhar.close();
+      return;
+    }
+
+    await navigator.clipboard.writeText(
+      textoCompartilhamento
+    );
+
+    modalCompartilhar.close();
+
+    mostrarStatus(
+      'Lista copiada. Abra o WhatsApp para enviar.'
+    );
+  } catch (erro) {
+    if (erro && erro.name === 'AbortError') {
+      return;
+    }
+
+    const nomeErro =
+      erro && erro.name
+        ? erro.name
+        : 'Erro desconhecido';
+
+    const mensagemErro =
+      erro && erro.message
+        ? erro.message
+        : 'Sem detalhes';
+
+    mostrarStatus(
+      nomeErro + ': ' + mensagemErro,
+      true
+    );
+  }
+}
+
+    function consultarEstoque(
+  tamanho,
+  publico,
+  usos
+) {
+      return new Promise((resolve, reject) => {
+        const nomeCallback =
+          'appLojaCallback_' + Date.now();
+
+        const script =
+          document.createElement('script');
+
+        const tempoLimite = setTimeout(() => {
+          limparConsulta();
+
+          reject(
+            new Error(
+              'O backend demorou para responder.'
+            )
+          );
+        }, 15000);
+
+
+        function limparConsulta() {
+          clearTimeout(tempoLimite);
+
+          delete window[nomeCallback];
+
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+        }
+
+
+        window[nomeCallback] = resposta => {
+          limparConsulta();
+
+          if (!resposta || resposta.sucesso !== true) {
+            reject(
+              new Error(
+                resposta && resposta.erro
+                  ? resposta.erro
+                  : 'Resposta inválida do backend.'
+              )
+            );
+
+            return;
+          }
+
+          resolve(resposta.dados);
+        };
+
+
+        const parametros =
+  new URLSearchParams({
+    acao: 'buscarModelosPorTamanho',
+    tamanho: String(tamanho),
+    publico: String(publico || ''),
+    usos: JSON.stringify(
+      Array.isArray(usos) ? usos : []
+    ),
+    callback: nomeCallback
+  });
+
+        script.src =
+          API_URL + '?' + parametros.toString();
+
+        script.onerror = () => {
+          limparConsulta();
+
+          reject(
+            new Error(
+              'Não foi possível acessar o backend.'
+            )
+          );
+        };
+
+        document.body.appendChild(script);
+      });
+    }
+
+    function consultarFotoProduto(idProduto) {
+  return new Promise((resolve, reject) => {
+    const nomeCallback =
+      'appLojaFotoCallback_' + Date.now();
+
+    const script =
+      document.createElement('script');
+
+    const tempoLimite = setTimeout(() => {
+      limparConsultaFoto();
+
+      reject(
+        new Error(
+          'O backend demorou para responder.'
+        )
+      );
+    }, 15000);
+
+    function limparConsultaFoto() {
+      clearTimeout(tempoLimite);
+
+      delete window[nomeCallback];
+
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    }
+
+    window[nomeCallback] = resposta => {
+      limparConsultaFoto();
+
+      if (!resposta || resposta.sucesso !== true) {
+        reject(
+          new Error(
+            resposta && resposta.erro
+              ? resposta.erro
+              : 'Resposta inválida do backend.'
+          )
+        );
+
+        return;
+      }
+
+      resolve(resposta.dados);
+    };
+
+    const parametros =
+      new URLSearchParams({
+        acao: 'buscarFotoPorProduto',
+        idProduto: String(idProduto),
+        callback: nomeCallback
+      });
+
+    script.src =
+      API_URL + '?' + parametros.toString();
+
+    script.onerror = () => {
+      limparConsultaFoto();
+
+      reject(
+        new Error(
+          'Não foi possível acessar o backend.'
+        )
+      );
+    };
+
+    document.body.appendChild(script);
+  });
+}
+
+    function transformarFotoEmArquivo(dadosFoto) {
+  const binario = atob(dadosFoto.base64);
+  const bytes = new Uint8Array(binario.length);
+
+  for (let indice = 0; indice < binario.length; indice++) {
+    bytes[indice] = binario.charCodeAt(indice);
+  }
+
+  return new File(
+    [bytes],
+    dadosFoto.nomeArquivo || 'produto.jpg',
+    {
+      type: dadosFoto.tipo || 'image/jpeg'
+    }
+  );
+}
+
+    async function buscar() {
+      const tamanho =
+        Number(campoTamanho.value);
+
+      if (
+        !Number.isInteger(tamanho) ||
+        tamanho < 18 ||
+        tamanho > 48
+      ) {
+        limparResultados();
+
+        mostrarStatus(
+          'Informe um tamanho inteiro entre 18 e 48.',
+          true
+        );
+
+        campoTamanho.focus();
+        return;
+      }
+
+      botaoBuscar.disabled = true;
+      botaoBuscar.textContent =
+  'Consultando...';
+
+      limparResultados();
+      mostrarStatus('Consultando estoque...');
+
+      try {
+        const dados =
+  await consultarEstoque(
+    tamanho,
+    publicoSelecionado,
+    Array.from(usosSelecionados)
+  );
+
+        exibirResultados(dados);
+
+      } catch (erro) {
+        limparResultados();
+
+        mostrarStatus(
+          erro.message ||
+          'Erro ao consultar o estoque.',
+          true
+        );
+
+      } finally {
+        botaoBuscar.disabled = false;
+        botaoBuscar.textContent =
+  'Consultar';
+      }
+    }
+
+    filtrosPublico.addEventListener(
+  'click',
+  evento => {
+    const chip =
+      evento.target.closest('[data-publico]');
+
+    if (!chip) {
+      return;
+    }
+
+    const publico =
+      chip.dataset.publico;
+
+    publicoSelecionado =
+      publicoSelecionado === publico
+        ? ''
+        : publico;
+
+    atualizarFiltrosVisuais();
+  }
+);
+
+filtrosUso.addEventListener(
+  'click',
+  evento => {
+    const chip =
+      evento.target.closest('[data-uso]');
+
+    if (!chip) {
+      return;
+    }
+
+    const uso =
+      chip.dataset.uso;
+
+    if (usosSelecionados.has(uso)) {
+      usosSelecionados.delete(uso);
+    } else {
+      usosSelecionados.add(uso);
+    }
+
+    atualizarFiltrosVisuais();
+  }
+);
+
+botaoLimparFiltros.addEventListener(
+  'click',
+  () => {
+    publicoSelecionado = '';
+    usosSelecionados.clear();
+
+    atualizarFiltrosVisuais();
+  }
+);
+
+    botaoCompartilhar.addEventListener(
+  'click',
+  abrirModalCompartilhar
+);
+
+    botaoVoltar.addEventListener(
+  'click',
+  () => {
+    modalCompartilhar.close();
+  }
+);
+
+botaoAbrirCompartilhamento.addEventListener(
+  'click',
+  abrirCompartilhamentoNativo
+);
+
+    botaoBuscar.addEventListener(
+      'click',
+      buscar
+    );
+
+
+    campoTamanho.addEventListener(
+      'keydown',
+      evento => {
+        if (evento.key === 'Enter') {
+          buscar();
+        }
+      }
+    );
+  </script>
+</body>
+</html>
