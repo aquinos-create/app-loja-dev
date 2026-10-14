@@ -125,13 +125,14 @@
       cursor: pointer;
     }
 
-    .menu-modulo-principal { position:relative; display:flex; justify-content:flex-end; margin:10px 0; }
-    .botao-menu-principal { width:auto; min-height:40px; margin:0; padding:8px 12px; font-size:14px; }
-    .menu-modulo-principal .menu-modulo-subtela { top:46px; right:0; }
-    .acoes-subtela { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-    .menu-subtela { width:auto; min-height:40px; margin:0; padding:8px 12px; font-size:14px; }
-    .menu-modulo-subtela { position:absolute; z-index:20; right:14px; top:58px; display:grid; gap:6px; min-width:210px; padding:8px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 24px #0002; }
-    .menu-modulo-subtela a { padding:10px 12px; border-radius:7px; color:#111827; text-decoration:none; font-weight:700; }
+    .menu-modulo-principal { position:relative; display:flex; align-items:center; justify-content:flex-end; gap:8px; margin:10px 0; }
+    .botao-voltar-principal { display:inline-flex; align-items:center; justify-content:center; min-height:40px; padding:8px 12px; font-size:14px; text-decoration:none; white-space:nowrap; }
+    .botao-menu-principal { width:auto; min-height:40px; margin:0; padding:8px 12px; font-size:14px; white-space:nowrap; }
+    .menu-modulo-principal .menu-modulo-subtela { top:calc(100% + 8px); right:0; }
+    .acoes-subtela { position:relative; display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .menu-subtela { width:auto; min-height:40px; margin:0; padding:8px 12px; font-size:14px; white-space:nowrap; }
+    .menu-modulo-subtela { position:absolute; z-index:20; right:0; top:calc(100% + 8px); display:grid; gap:6px; width:min(280px,calc(100vw - 32px)); max-width:calc(100vw - 32px); min-width:0; padding:8px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 24px #0002; }
+    .menu-modulo-subtela a { padding:10px 12px; border-radius:7px; color:#111827; text-decoration:none; font-weight:700; overflow-wrap:anywhere; }
     .menu-modulo-subtela a[aria-current="page"] { background:#111827; color:#fff; }
     [hidden] { display:none !important; }
     .painel {
@@ -786,6 +787,15 @@
         flex-direction: column;
       }
 
+      .menu-modulo-principal {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .acoes-subtela {
+        flex-wrap: nowrap;
+      }
+
     .painel {
         padding: 16px;
       }
@@ -867,6 +877,7 @@
         </div>
       </div>
       <div class="menu-modulo-principal">
+        <a id="botaoVoltarPrincipal" class="botao-voltar botao-voltar-principal" href="index.html">← Voltar</a>
         <button id="botaoMenuPrincipal" class="menu-subtela botao-menu-principal" type="button" aria-expanded="false" aria-controls="menuModuloPrincipal">☰ Menu</button>
         <nav id="menuModuloPrincipal" class="menu-modulo-subtela" aria-label="Menu de módulos" hidden>
           <a href="index.html">🏠 Início</a>
@@ -976,7 +987,7 @@
           class="botao-voltar"
           type="button"
         >
-          ← Voltar
+          ← Voltar ao estoque
         </button>
         <button id="botaoMenuSubtela" class="menu-subtela" type="button" aria-expanded="false" aria-controls="menuModuloSubtela" hidden>☰ Menu</button>
         <nav id="menuModuloSubtela" class="menu-modulo-subtela" aria-label="Menu de módulos" hidden>
@@ -1217,6 +1228,7 @@
 
     const botaoMenuPrincipal = document.getElementById('botaoMenuPrincipal');
     const menuModuloPrincipal = document.getElementById('menuModuloPrincipal');
+    const botaoVoltarPrincipal = document.getElementById('botaoVoltarPrincipal');
     const botaoMenuSubtela = document.getElementById('botaoMenuSubtela');
     const menuModuloSubtela = document.getElementById('menuModuloSubtela');
     const botaoVoltar =
@@ -3761,6 +3773,7 @@
     
     
     function atualizarNavegacaoSubtela(emDetalhes) {
+      botaoVoltarPrincipal.hidden = emDetalhes;
       botaoMenuPrincipal.hidden = emDetalhes;
       menuModuloPrincipal.hidden = true;
       botaoMenuPrincipal.setAttribute('aria-expanded', 'false');
@@ -3995,6 +4008,16 @@
     });
     menuModuloSubtela.addEventListener('click', event => {
       if (event.target.closest('a')) {
+        menuModuloSubtela.hidden = true;
+        botaoMenuSubtela.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('click', event => {
+      if (!event.target.closest('#botaoMenuPrincipal') && !event.target.closest('#menuModuloPrincipal')) {
+        menuModuloPrincipal.hidden = true;
+        botaoMenuPrincipal.setAttribute('aria-expanded', 'false');
+      }
+      if (!event.target.closest('#botaoMenuSubtela') && !event.target.closest('#menuModuloSubtela')) {
         menuModuloSubtela.hidden = true;
         botaoMenuSubtela.setAttribute('aria-expanded', 'false');
       }
