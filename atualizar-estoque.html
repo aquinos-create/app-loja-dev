@@ -41,9 +41,10 @@
 
     .topo {
       display: flex;
+      flex-direction: column;
       align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
+      justify-content: flex-start;
+      gap: 8px;
       margin-bottom: 24px;
     }
 
@@ -125,7 +126,7 @@
       cursor: pointer;
     }
 
-    .menu-modulo-principal { position:relative; display:flex; align-items:center; justify-content:flex-start; gap:8px; margin:10px 0; }
+    .menu-modulo-principal { position:relative; order:-1; display:flex; align-items:center; justify-content:flex-start; gap:8px; margin:0 0 8px; }
     .botao-voltar-principal { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:9px 13px; font-size:14px; text-decoration:none; white-space:nowrap; }
     .botao-menu-principal { width:auto; min-height:42px; margin:0; padding:9px 13px; font-size:14px; white-space:nowrap; }
     .menu-modulo-principal .menu-modulo-subtela { top:calc(100% + 8px); right:0; }
