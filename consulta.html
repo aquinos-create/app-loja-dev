@@ -40,10 +40,10 @@
       color: #6b7280;
     }
 
-    .menu-global { position:relative; display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 14px; }
+    .menu-global { position:relative; display:flex; align-items:center; justify-content:flex-start; gap:8px; margin:0 0 14px; }
     .botao-voltar-global { display:inline-flex; align-items:center; justify-content:center; width:auto; min-height:42px; padding:9px 13px; border:0; border-radius:8px; background:#e5e7eb; color:#111827; font-weight:700; text-decoration:none; white-space:nowrap; }
     .botao-menu-global { width:auto; min-height:42px; padding:9px 13px; border:0; border-radius:8px; background:#e5e7eb; color:#111827; font-weight:700; cursor:pointer; white-space:nowrap; }
-    .painel-menu-global { position:absolute; z-index:30; right:0; top:calc(100% + 8px); display:grid; gap:6px; width:min(280px,calc(100vw - 32px)); max-width:calc(100vw - 32px); min-width:0; padding:8px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 24px #0002; }
+    .painel-menu-global { position:absolute; z-index:30; right:0; top:calc(100% + 8px); display:grid; gap:6px; width:min(280px,calc(100vw - 32px)); max-width:calc(100vw - 32px); min-width:0; padding:8px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 24px #0002; overflow-wrap:anywhere; }
     .painel-menu-global a { padding:10px 12px; border-radius:7px; color:#111827; text-decoration:none; font-weight:700; }
     .painel-menu-global a[aria-current="page"] { background:#111827; color:#fff; }
     [hidden] { display:none !important; }
@@ -324,6 +324,11 @@ dialog::backdrop {
 
       button {
         width: 100%;
+      }
+
+      .menu-global > .botao-menu-global {
+        width: auto;
+        flex: 0 0 auto;
       }
     }
   </style>
