@@ -532,6 +532,25 @@
       color: #6b7280;
     }
 
+    .botao-historico-estoque {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      margin: 2px 0 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #174ea6;
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .botao-historico-estoque:focus-visible {
+      outline: 2px solid #1d4ed8;
+      outline-offset: 2px;
+    }
+
     .mensagem-variados {
       margin: 14px 0 0;
       padding: 12px;
@@ -1067,6 +1086,14 @@
             class="tipo-entrada"
           ></span>
 
+          <a
+            id="linkHistoricoEstoque"
+            class="botao-historico-estoque"
+            href="#"
+            target="_self"
+            rel="noreferrer"
+          >Histórico</a>
+
           <div
             id="resumoAlertasTamanhos"
             class="resumo-alertas-tamanhos"
@@ -1289,6 +1316,9 @@
 
     const corDetalhes =
       document.getElementById('corDetalhes');
+
+    const linkHistoricoEstoque =
+      document.getElementById('linkHistoricoEstoque');
 
     const tipoEntradaDetalhes =
       document.getElementById('tipoEntradaDetalhes');
@@ -1811,6 +1841,14 @@
       link.title = `Abrir reservas e lista de espera do tamanho ${tamanho}`;
       link.setAttribute('aria-label', link.title);
       return link;
+    }
+
+    function criarUrlHistoricoMovimentacoesEstoque(idProduto) {
+      const url = new URL(API_PROTEGIDA_ALERTAS_URL);
+      url.searchParams.set('acao', 'visualizarHistoricoMovimentacoesEstoque');
+      url.searchParams.set('idProduto', String(idProduto));
+      url.searchParams.set('retorno', window.location.origin + window.location.pathname);
+      return url.toString();
     }
 
     function renderizarResumoAlertasTamanhos(tamanhos, idProduto) {
@@ -3310,6 +3348,8 @@
       }
 
       corDetalhes.textContent = produto.cor;
+      linkHistoricoEstoque.href =
+        criarUrlHistoricoMovimentacoesEstoque(produto.idProduto);
 
       if (possuiAlertaNesteProduto) {
         corDetalhes.appendChild(
