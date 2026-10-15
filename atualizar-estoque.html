@@ -132,7 +132,49 @@
     .menu-modulo-principal .menu-modulo-subtela { top:calc(100% + 8px); left:auto; right:0; }
     .acoes-subtela { position:relative; width:100%; display:flex; align-items:center; gap:8px; margin-bottom:14px; }
     .menu-subtela { width:auto; min-height:42px; margin:0; padding:9px 13px; font-size:14px; white-space:nowrap; }
-    .menu-modulo-principal > .botao-voltar, .menu-modulo-principal > .menu-subtela, .acoes-subtela > .botao-voltar, .acoes-subtela > .menu-subtela { background:#e8efff; color:#1e3a8a; }
+    .menu-modulo-principal > .botao-voltar, .menu-modulo-principal > .menu-subtela, .acoes-subtela > .botao-voltar, .acoes-subtela > .menu-subtela {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:auto;
+      min-height:42px;
+      margin:0;
+      padding:9px 13px;
+      font-size:14px;
+      line-height:normal;
+      white-space:nowrap;
+      background:#e8efff;
+      color:#1e3a8a;
+      border:0;
+      border-radius:8px;
+      box-shadow:none;
+      outline:none;
+      appearance:none;
+      -webkit-appearance:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .menu-modulo-principal > .botao-voltar:focus:not(:focus-visible),
+    .menu-modulo-principal > .menu-subtela:focus:not(:focus-visible),
+    .acoes-subtela > .botao-voltar:focus:not(:focus-visible),
+    .acoes-subtela > .menu-subtela:focus:not(:focus-visible) {
+      outline:none;
+      box-shadow:none;
+    }
+    .menu-modulo-principal > .botao-voltar:focus-visible,
+    .menu-modulo-principal > .menu-subtela:focus-visible,
+    .acoes-subtela > .botao-voltar:focus-visible,
+    .acoes-subtela > .menu-subtela:focus-visible {
+      outline:2px solid #1d4ed8;
+      outline-offset:2px;
+      box-shadow:none;
+    }
+    .menu-modulo-principal > .botao-voltar:active,
+    .menu-modulo-principal > .menu-subtela:active,
+    .acoes-subtela > .botao-voltar:active,
+    .acoes-subtela > .menu-subtela:active {
+      box-shadow:none;
+      transform:none;
+    }
     .menu-modulo-subtela { position:absolute; z-index:20; left:auto; right:0; top:calc(100% + 8px); display:grid; gap:6px; width:min(280px,calc(100vw - 32px)); max-width:calc(100vw - 32px); min-width:0; padding:8px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 24px #0002; }
     .menu-modulo-subtela a { padding:10px 12px; border-radius:7px; color:#111827; text-decoration:none; font-weight:700; overflow-wrap:anywhere; }
     .menu-modulo-subtela a[aria-current="page"] { background:#1d4ed8; color:#fff; }
