@@ -945,7 +945,7 @@
         <nav id="menuModuloPrincipal" class="menu-modulo-subtela" aria-label="Menu de módulos" hidden>
           <a href="index.html">🏠 Início</a>
           <a href="consulta.html">🔎 Consulta</a>
-          <a href="atualizar-estoque.html" aria-current="page">📦 Atualizar Estoque</a>
+          <a href="atualizar-estoque.html?entrada=inicial" aria-current="page">📦 Atualizar Estoque</a>
           <a href="https://script.google.com/macros/s/AKfycbyW4reybK8v6rYtOptxn3drMY7NPxeigfWV1BgZ4shpoox5p_dZ5f8DpVzZuIB7MZ8/exec?acao=abrirListaEspera">📋 Lista de Espera</a>
         </nav>
       </div>
@@ -1056,7 +1056,7 @@
         <nav id="menuModuloSubtela" class="menu-modulo-subtela" aria-label="Menu de módulos" hidden>
           <a href="index.html">🏠 Início</a>
           <a href="consulta.html">🔎 Consulta</a>
-          <a href="atualizar-estoque.html" aria-current="page">📦 Atualizar Estoque</a>
+          <a href="atualizar-estoque.html?entrada=inicial" aria-current="page">📦 Atualizar Estoque</a>
           <a href="https://script.google.com/macros/s/AKfycbyW4reybK8v6rYtOptxn3drMY7NPxeigfWV1BgZ4shpoox5p_dZ5f8DpVzZuIB7MZ8/exec?acao=abrirListaEspera">📋 Lista de Espera</a>
         </nav>
       </div>
@@ -4106,6 +4106,21 @@
         botaoMenuSubtela.setAttribute('aria-expanded', 'false');
       }
     });
+    const entradaListaInicial =
+      new URLSearchParams(window.location.search)
+        .get('entrada') === 'inicial';
+
+    if (entradaListaInicial) {
+      esquecerProdutoAberto();
+      const urlEntrada = new URL(window.location.href);
+      urlEntrada.searchParams.delete('entrada');
+      window.history.replaceState(
+        window.history.state,
+        '',
+        urlEntrada.pathname + urlEntrada.search + urlEntrada.hash
+      );
+    }
+
     const idProdutoAoCarregar =
       obterProdutoAbertoMemorizado();
 
