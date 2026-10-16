@@ -4106,6 +4106,16 @@
         botaoMenuSubtela.setAttribute('aria-expanded', 'false');
       }
     });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && (!menuModuloPrincipal.hidden || !menuModuloSubtela.hidden)) {
+        const fecharSubtela = !menuModuloSubtela.hidden;
+        menuModuloPrincipal.hidden = true;
+        botaoMenuPrincipal.setAttribute('aria-expanded', 'false');
+        menuModuloSubtela.hidden = true;
+        botaoMenuSubtela.setAttribute('aria-expanded', 'false');
+        (fecharSubtela ? botaoMenuSubtela : botaoMenuPrincipal).focus();
+      }
+    });
     const entradaListaInicial =
       new URLSearchParams(window.location.search)
         .get('entrada') === 'inicial';
