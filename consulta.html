@@ -1247,6 +1247,7 @@ botaoAbrirCompartilhamento.addEventListener(
   botaoMenuGlobal.addEventListener('click',()=>{const abrir=painelMenuGlobal.hidden;painelMenuGlobal.hidden=!abrir;botaoMenuGlobal.setAttribute('aria-expanded',String(abrir));});
   painelMenuGlobal.addEventListener('click',event=>{if(event.target.closest('a')){painelMenuGlobal.hidden=true;botaoMenuGlobal.setAttribute('aria-expanded','false');}});
   document.addEventListener('click',event=>{if(!event.target.closest('#botaoMenuGlobal')&&!event.target.closest('#painelMenuGlobal')){painelMenuGlobal.hidden=true;botaoMenuGlobal.setAttribute('aria-expanded','false');}});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!painelMenuGlobal.hidden){painelMenuGlobal.hidden=true;botaoMenuGlobal.setAttribute('aria-expanded','false');botaoMenuGlobal.focus();}});
 </script>
 </body>
 </html>
